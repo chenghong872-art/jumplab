@@ -1,0 +1,88 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>JumpLab V3 模擬版</title><style>
+:root{--i:#172033;--m:#667085;--l:#dce3ee;--b:#2055d6;--bb:#eaf0ff}*{box-sizing:border-box}body{margin:0;background:#f4f7fb;color:var(--i);font:15px/1.55 system-ui,"Noto Sans TC",sans-serif}header{background:linear-gradient(135deg,#173c9c,#2c75e8);color:#fff;padding:28px max(20px,calc((100% - 1180px)/2));display:flex;justify-content:space-between;gap:24px;align-items:center}h1{margin:0;font-size:28px}header p{margin:5px 0 0;opacity:.82}.version{white-space:nowrap;border:1px solid #ffffff4d;border-radius:999px;padding:8px 14px}main{max-width:1180px;margin:24px auto;padding:0 20px}.grid{display:grid;grid-template-columns:1.3fr .7fr;gap:18px}.panel{background:#fff;border:1px solid var(--l);border-radius:18px;padding:20px;box-shadow:0 10px 30px #22304d12;margin-bottom:18px}h2{font-size:19px;margin:0 0 14px}h3{font-size:16px;margin:18px 0 8px}.notice{background:#fff8ea;border:1px solid #f3d49c;border-radius:14px;padding:15px;margin-bottom:18px}.notice ul{margin:8px 0 0 18px;padding:0}.check{display:flex;gap:10px;margin-top:12px}.check input{width:19px;height:19px}.toolbar{display:flex;flex-wrap:wrap;gap:10px}.field{display:flex;flex-direction:column;gap:5px;min-width:120px;flex:1}.field label,.small{font-size:12px;color:var(--m)}select,input{width:100%;border:1px solid var(--l);border-radius:10px;padding:10px;background:#fff;color:var(--i)}button{border:0;border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer;background:var(--bb);color:var(--b)}button.primary{background:var(--b);color:#fff}button.ghost{background:#f4f6fa;color:var(--i)}button.danger{color:#c24141;background:#fff0f0}button:disabled{opacity:.45;cursor:not-allowed}.drop{border:2px dashed #b7c7e7;border-radius:15px;text-align:center;padding:28px 15px;background:#f8faff;cursor:pointer;display:block}.drop input{display:none}.video-wrap{background:#101827;border-radius:14px;min-height:310px;display:grid;place-items:center;overflow:hidden;color:#c8d4ef}.video-wrap video{max-width:100%;max-height:440px}.empty{padding:50px 10px;text-align:center}.metrics{display:grid;grid-template-columns:1fr 1fr;gap:12px}.metric{background:#f7f9fc;border:1px solid var(--l);padding:15px;border-radius:14px}.metric span{display:block;color:var(--m);font-size:12px}.metric b{display:block;font-size:28px;margin-top:5px}.timeline{display:grid;gap:8px;margin-top:14px}.timeline label{display:flex;justify-content:space-between;color:var(--m);font-size:12px}.timeline input{width:100%}.status{display:inline-flex;align-items:center;gap:6px;color:var(--m);font-size:13px}.dot{width:8px;height:8px;border-radius:50%;background:#98a2b3}.dot.ok{background:#168a5a}.actions{display:flex;flex-wrap:wrap;gap:8px}.trial{display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--l)}.right-sticky{position:sticky;top:15px;align-self:start}.footer{text-align:center;color:var(--m);font-size:12px;padding:12px 0 30px}@media(max-width:850px){.grid{grid-template-columns:1fr}.right-sticky{position:static}header{align-items:flex-start;flex-direction:column}}@media print{header,.notice,.controls,.drop,.actions,.footer{display:none!important}body{background:#fff}.panel{box-shadow:none}.grid{display:block}}
++</style><script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script><style>.video-wrap{position:relative}.skeleton-canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}.ai-panel{margin-top:12px;padding:12px;border:1px solid #c7d6f7;background:#f5f8ff;border-radius:12px}.ai-panel .actions{margin-top:8px}</style></head><body><header><div><h1>JumpLab（JL）</h1><p>外骨骼跳躍影像分析｜研究、教學與運動表現觀察</p></div><div class="version">模擬版 V3 · 本機處理</div></header><main>
+<section class="notice"><strong>跳躍前請先確認安全狀況</strong><div>本工具不是醫療診斷或測力板替代品；影片與姿態資料僅在本機處理。</div><ul><li>測試區域平整乾燥、無障礙物，並有足夠落地空間。</li><li>目前沒有疼痛、近期受傷、胸痛、異常呼吸困難或明顯不適。</li><li>已穿著止滑鞋並完成熱身；出現不適請立即停止。</li></ul><label class="check"><input id="safe" type="checkbox"><span>我已閱讀並確認以上全部安全事項。若任何一項不符合，請不要進行跳躍測驗。</span></label></section>
+<div class="grid"><div><section class="panel controls"><h2>1｜設定測驗</h2><div class="toolbar"><div class="field"><label>測驗</label><select id="testType"><option>CMJ 下蹲跳</option><option>SJ 蹲跳</option><option>DJ Drop Jump</option></select></div><div class="field"><label>影片 FPS</label><select id="fps"><option>30</option><option>60</option><option>120</option><option selected>240</option></select></div></div><h3>2｜匯入側面跳躍影片</h3><label class="drop" for="videoFile"><strong>點此選擇影片</strong><br><span class="small">建議完整呈現頭部與腳掌；影片不會上傳</span><input id="videoFile" type="file" accept="video/*"></label></section>
+<section class="panel"><div class="video-wrap" id="videoWrap"><div class="empty">請先勾選安全確認，再匯入影片</div><canvas id="skeletonCanvas" class="skeleton-canvas" hidden></canvas><video id="video" controls hidden></video></div><div class="timeline"><label><span>剪輯起點</span><span id="startText">00:00.000</span></label><input id="start" type="range" min="0" max="0" step=".001" value="0" disabled><label><span>剪輯終點</span><span id="endText">00:00.000</span></label><input id="end" type="range" min="0" max="0" step=".001" value="0" disabled><label><span>V3 逐格時間軸</span><span id="frameText">00:00.000｜Frame 0 / 1</span></label><input id="frame" type="range" min="0" max="0" step="1" value="0" disabled></div><div class="actions" style="margin-top:12px"><button id="prev10" class="ghost" disabled>−10 格</button><button id="prev" class="ghost" disabled>上一格</button><button id="play" class="primary" disabled>播放</button><button id="next" class="ghost" disabled>下一格</button><button id="next10" class="ghost" disabled>＋10 格</button></div><div class="actions" style="margin-top:12px"><button id="markT" disabled>標記 T｜腳尖離地</button><button id="markL" disabled>標記 L｜首次落地</button><button id="clearMarks" class="danger" disabled>清除標記</button></div><div class="status" style="margin-top:12px"><span id="stateDot" class="dot"></span><span id="videoStatus">尚未選擇影片</span></div></section></div>
+<aside class="right-sticky"><section class="panel"><h2>目前分析結果</h2><div class="metrics"><div class="metric"><span>FLIGHT TIME</span><b id="flight">—</b><span>秒</span></div><div class="metric"><span>JUMP HEIGHT</span><b id="height">—</b><span>公分</span></div></div><p class="small">跳高依滯空時間換算：h = 9.81 × t² ÷ 8。T／L 可逐格人工複核。</p><div class="actions"><button id="saveTrial" class="primary" disabled>儲存本次檢測（最多 3 次）</button><button id="copy" disabled>複製結果</button><button id="print" class="ghost">列印／另存 PDF</button></div></section><section class="panel"><h2>試跳趨勢</h2><div id="trials"><div class="small">尚未儲存試跳</div></div></section></aside></div>
+<section class="panel"><h2>選手基本資料</h2><div class="toolbar"><div class="field"><label>單位</label><input id="unit" placeholder="例如：A001"></div><div class="field"><label>檢測時間</label><input id="date" type="date"></div><div class="field"><label>姓名</label><input id="name"></div><div class="field"><label>身高（cm）</label><input id="stature" type="number"></div><div class="field"><label>體重（kg）</label><input id="weight" type="number"></div><div class="field"><label>年齡</label><input id="age" type="number"></div><div class="field"><label>性別</label><select id="sex"><option>請選擇</option><option>男性</option><option>女性</option><option>其他／不提供</option></select></div><div class="field"><label>運動專項</label><input id="sport"></div></div></section><section class="panel"><h2>分析摘要</h2><p id="summary">請完成安全確認並匯入影片。這個模擬版使用手動 T／L 標記計算結果，方便先驗證實驗流程。</p><p class="small">AI 信心、外骨骼、關節角度與地板線等進階項目保留為未來可插入的分析模組。</p></section><div class="footer">JumpLab V3 模擬版｜本機處理｜僅供研究、教學與運動表現觀察</div><section class="ai-panel"><strong>外骨骼與 AI 自動辨識</strong><div class="small">瀏覽器端姿態模型；影片不會上傳。可先開啟外骨骼，再執行 AI 辨識。</div><div class="actions"><button id="skeletonToggle" class="ghost">外骨骼：開</button><button id="aiAnalyze" class="primary">AI 自動辨識跳躍高度</button><button id="aiStop" class="danger" disabled>停止 AI</button></div><div id="aiStatus" class="small" style="margin-top:8px">AI 尚未啟動</div></section></main>
+<script>
+const $=x=>document.getElementById(x),s=$("safe"),f=$("videoFile"),v=$("video"),st={fps:240,d:0,fr:0,T:null,L:null,trials:[]};$("date").value=new Date().toISOString().slice(0,10);const tm=x=>new Date(1e3*Math.max(0,+x||0)).toISOString().slice(14,23);function sync(){st.fr=+$("frame").value;v.currentTime=st.fr/st.fps;$("frameText").textContent=`${tm(st.fr/st.fps)}｜Frame ${st.fr} / ${$("frame").max}`;$("startText").textContent=tm($("start").value);$("endText").textContent=tm($("end").value)}function step(n){$("frame").value=Math.max(0,Math.min(+$('frame').max,+$('frame').value+n));sync()}function result(){if(st.T!==null&&st.L!==null){let t=Math.max(0,st.L-st.T),h=9.81*t*t/8;$("flight").textContent=t.toFixed(3);$("height").textContent=(100*h).toFixed(1);$("copy").disabled=false;$("saveTrial").disabled=st.trials.length>=3}else{$("flight").textContent=$("height").textContent="—";$("copy").disabled=$("saveTrial").disabled=true}}
+s.onchange=()=>{if(!s.checked){f.value="";v.hidden=true;$("videoStatus").textContent="請先勾選安全確認"}};f.onchange=()=>{let file=f.files[0];if(!file)return;v.src=URL.createObjectURL(file);v.hidden=false;$("videoWrap").querySelector('.empty').style.display='none';v.onloadedmetadata=()=>{st.d=v.duration;st.fps=+$('fps').value;['start','end'].forEach(x=>{$(x).max=st.d;$(x).disabled=false});$('end').value=st.d;$('frame').max=Math.max(0,Math.floor(st.d*st.fps)-1);$('frame').disabled=false;['prev10','prev','play','next','next10','markT','markL','clearMarks','saveTrial','copy'].forEach(x=>$(x).disabled=false);$('videoStatus').textContent=`${file.name}｜${tm(st.d)}｜${st.fps} FPS`;$('stateDot').className='dot ok';sync()}};$('fps').onchange=()=>{st.fps=+$('fps').value;if(st.d){$('frame').max=Math.max(0,Math.floor(st.d*st.fps)-1);sync()}};$('frame').oninput=sync;$('start').oninput=sync;$('end').oninput=sync;
+$('prev10').onclick=()=>step(-10);$('prev').onclick=()=>step(-1);$('next').onclick=()=>step(1);$('next10').onclick=()=>step(10);$('play').onclick=()=>v.paused?v.play():v.pause();v.onplay=()=>$('play').textContent='暫停';v.onpause=()=>$('play').textContent='播放';function mark(x){st[x]=st.fr/st.fps;result();$('summary').textContent=`已標記 ${x==='T'?'腳尖離地（T）':'首次落地（L）'}：${tm(st[x])}`}$('markT').onclick=()=>mark('T');$('markL').onclick=()=>mark('L');$('clearMarks').onclick=()=>{st.T=st.L=null;result();$('summary').textContent='已清除 T／L 標記'};
+$('saveTrial').onclick=()=>{st.trials.push({n:st.trials.length+1,t:+$('flight').textContent,h:+$('height').textContent,type:$('testType').value});$('trials').innerHTML=st.trials.map(x=>`<div class="trial"><span><b>試跳 ${x.n}</b><br><span class="small">${x.type}</span></span><span><b>${x.h.toFixed(1)} cm</b><br><span class="small">${x.t.toFixed(3)} s</span></span></div>`).join('');$('saveTrial').disabled=st.trials.length>=3};$('copy').onclick=async()=>{let t=`JumpLab V3\n測驗：${$('testType').value}\nFlight Time：${$('flight').textContent} s\nJump Height：${$('height').textContent} cm\n姓名：${$('name').value||'—'}\n日期：${$('date').value}`;try{await navigator.clipboard.writeText(t);$('copy').textContent='已複製';setTimeout(()=>$('copy').textContent='複製結果',1200)}catch{alert(t)}};$('print').onclick=()=>window.print();result();
+</script><script src="./ai-pose.js"></script><script id="JL_FIX_V2">
+(() => {
+  const q = id => document.getElementById(id);
+  const video = q('video'), file = q('videoFile'), safe = q('safe');
+  const fpsEl = q('fps'), frameEl = q('frame'), statusEl = q('videoStatus'), dotEl = q('stateDot');
+  let tMark = null, lMark = null;
+  const readFps = () => Number(fpsEl.value) || 30;
+  const currentTime = () => Math.max(0, Number(video.currentTime) || Number(frameEl.value || 0) / readFps());
+  const frameText = time => `目前時間 ${time.toFixed(3)} 秒｜Frame ${Math.round(time * readFps())}`;
+  const setStatus = (text, ok=false) => { statusEl.textContent = text; dotEl.className = ok ? 'dot ok' : 'dot'; };
+  const refreshResult = () => {
+    if (tMark !== null && lMark !== null) {
+      const flight = Math.max(0, lMark - tMark), height = 9.81 * flight * flight / 8 * 100;
+      q('flight').textContent = flight.toFixed(3); q('height').textContent = height.toFixed(1);
+      q('copy').disabled = false; q('saveTrial').disabled = false;
+      q('summary').textContent = `T 起跳 ${tMark.toFixed(3)} 秒，L 落地 ${lMark.toFixed(3)} 秒；滯空 ${flight.toFixed(3)} 秒，估算跳高 ${height.toFixed(1)} 公分。`;
+    } else { q('flight').textContent='—'; q('height').textContent='—'; q('copy').disabled=true; q('saveTrial').disabled=true; }
+  };
+  const mark = (which) => {
+    if (!video.src || !Number.isFinite(video.duration)) { setStatus('請先成功匯入可播放的影片'); return; }
+    const now = currentTime();
+    if (which === 'T') tMark = now; else lMark = now;
+    frameEl.value = Math.round(now * readFps());
+    q('frameText').textContent = frameText(now);
+    setStatus(`${which === 'T' ? '已標記起跳 T' : '已標記落地 L'}：${now.toFixed(3)} 秒`, true);
+    refreshResult();
+  };
+  q('markT').onclick = () => mark('T'); q('markL').onclick = () => mark('L');
+  q('clearMarks').onclick = () => { tMark=null; lMark=null; refreshResult(); setStatus('已清除起跳與落地標記'); };
+  q('play').addEventListener('click', () => setTimeout(() => setStatus(video.paused ? '影片已暫停，可標記目前影格' : '影片播放中，請暫停後再標記', true), 50));
+  video.addEventListener('error', () => setStatus('影片無法解碼；請轉成 MP4（H.264/AAC）後再試')); 
+  video.addEventListener('loadeddata', () => setStatus(`影片已載入，可拖曳逐格時間軸並標記 T／L`, true));
+  file.addEventListener('change', () => {
+    if (!safe.checked) { setStatus('請先勾選安全確認，再匯入影片'); file.value=''; return; }
+    tMark=null; lMark=null; refreshResult();
+    setStatus('正在讀取影片…');
+  });
+  q('fps').addEventListener('change', () => { tMark=null; lMark=null; refreshResult(); });
+  const save = () => {
+    if (tMark === null || lMark === null) { setStatus('請先標記起跳 T 與落地 L'); return; }
+    const item={type:q('testType').value,t:+q('flight').textContent,h:+q('height').textContent,date:q('date').value,name:q('name').value};
+    const list=JSON.parse(localStorage.getItem('jumplab-trials')||'[]'); if(list.length>=3) list.shift(); list.push(item); localStorage.setItem('jumplab-trials',JSON.stringify(list));
+    q('trials').innerHTML=list.map((x,i)=>`<div class="trial"><span><b>試跳 ${i+1}</b><br><span class="small">${x.type}｜${x.name||'未填姓名'}</span></span><span><b>${Number(x.h).toFixed(1)} cm</b><br><span class="small">${Number(x.t).toFixed(3)} s</span></span></div>`).join('');
+    setStatus(`已保存試跳 ${list.length} 次`, true);
+  };
+  q('saveTrial').onclick=save;
+  const oldTrials=JSON.parse(localStorage.getItem('jumplab-trials')||'[]'); if(oldTrials.length){q('trials').innerHTML=oldTrials.map((x,i)=>`<div class="trial"><span><b>試跳 ${i+1}</b><br><span class="small">${x.type}｜${x.name||'未填姓名'}</span></span><span><b>${Number(x.h).toFixed(1)} cm</b><br><span class="small">${Number(x.t).toFixed(3)} s</span></span></div>`).join('');}
+})();
+</script><script id="JL_FIX_V3">
+(() => {
+  const q=id=>document.getElementById(id), video=q('video'), file=q('videoFile'), safe=q('safe'), fps=q('fps'), frame=q('frame');
+  const status=text=>{q('videoStatus').textContent=text;};
+  safe.onchange=()=>{if(!safe.checked){file.value='';video.removeAttribute('src');video.load();status('請先勾選安全確認');}};
+  file.onchange=()=>{
+    if(!safe.checked){file.value='';status('請先勾選安全確認，再匯入影片');return;}
+    const selected=file.files&&file.files[0]; if(!selected)return;
+    const url=URL.createObjectURL(selected); video.src=url; video.hidden=false; q('videoWrap').querySelector('.empty').style.display='none'; status('正在讀取影片…');
+    video.onloadedmetadata=()=>{const d=video.duration, rate=Number(fps.value)||30;['start','end'].forEach(id=>{q(id).max=d;q(id).disabled=false});q('end').value=d;frame.max=Math.max(0,Math.floor(d*rate)-1);frame.disabled=false;['prev10','prev','play','next','next10','markT','markL','clearMarks','saveTrial','copy'].forEach(id=>q(id).disabled=false);status(`${selected.name}｜影片已載入，可標記起跳 T／落地 L`) };
+    video.onerror=()=>status('影片無法解碼，請轉成 MP4（H.264/AAC）後再試');
+  };
+})();
+</script><script id="JL_FIX_V4">
+(() => {
+  const q=id=>document.getElementById(id);
+  const read=()=>{try{return JSON.parse(localStorage.getItem('jumplab-trials')||'[]')}catch{return[]}};
+  const write=list=>{try{localStorage.setItem('jumplab-trials',JSON.stringify(list));return true}catch{return false}};
+  q('saveTrial').onclick=()=>{
+    const flight=Number(q('flight').textContent), height=Number(q('height').textContent);
+    if(!Number.isFinite(flight)||!Number.isFinite(height)){q('videoStatus').textContent='請先完成起跳 T 與落地 L 標記';return;}
+    const list=read();if(list.length>=3)list.shift();list.push({type:q('testType').value,t:flight,h:height,date:q('date').value,name:q('name').value});
+    const ok=write(list);q('videoStatus').textContent=ok?`已保存試跳 ${list.length} 次`:'瀏覽器禁止本機儲存；本次數據仍可複製或列印';
+    q('trials').innerHTML=list.map((x,i)=>`<div class="trial"><span><b>試跳 ${i+1}</b><br><span class="small">${x.type}｜${x.name||'未填姓名'}</span></span><span><b>${Number(x.h).toFixed(1)} cm</b><br><span class="small">${Number(x.t).toFixed(3)} s</span></span></div>`).join('');
+  };
+})();
+</script></body></html>
