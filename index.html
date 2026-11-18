@@ -1,88 +1,1300 @@
-<!doctype html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>JumpLab V3 模擬版</title><style>
-:root{--i:#172033;--m:#667085;--l:#dce3ee;--b:#2055d6;--bb:#eaf0ff}*{box-sizing:border-box}body{margin:0;background:#f4f7fb;color:var(--i);font:15px/1.55 system-ui,"Noto Sans TC",sans-serif}header{background:linear-gradient(135deg,#173c9c,#2c75e8);color:#fff;padding:28px max(20px,calc((100% - 1180px)/2));display:flex;justify-content:space-between;gap:24px;align-items:center}h1{margin:0;font-size:28px}header p{margin:5px 0 0;opacity:.82}.version{white-space:nowrap;border:1px solid #ffffff4d;border-radius:999px;padding:8px 14px}main{max-width:1180px;margin:24px auto;padding:0 20px}.grid{display:grid;grid-template-columns:1.3fr .7fr;gap:18px}.panel{background:#fff;border:1px solid var(--l);border-radius:18px;padding:20px;box-shadow:0 10px 30px #22304d12;margin-bottom:18px}h2{font-size:19px;margin:0 0 14px}h3{font-size:16px;margin:18px 0 8px}.notice{background:#fff8ea;border:1px solid #f3d49c;border-radius:14px;padding:15px;margin-bottom:18px}.notice ul{margin:8px 0 0 18px;padding:0}.check{display:flex;gap:10px;margin-top:12px}.check input{width:19px;height:19px}.toolbar{display:flex;flex-wrap:wrap;gap:10px}.field{display:flex;flex-direction:column;gap:5px;min-width:120px;flex:1}.field label,.small{font-size:12px;color:var(--m)}select,input{width:100%;border:1px solid var(--l);border-radius:10px;padding:10px;background:#fff;color:var(--i)}button{border:0;border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer;background:var(--bb);color:var(--b)}button.primary{background:var(--b);color:#fff}button.ghost{background:#f4f6fa;color:var(--i)}button.danger{color:#c24141;background:#fff0f0}button:disabled{opacity:.45;cursor:not-allowed}.drop{border:2px dashed #b7c7e7;border-radius:15px;text-align:center;padding:28px 15px;background:#f8faff;cursor:pointer;display:block}.drop input{display:none}.video-wrap{background:#101827;border-radius:14px;min-height:310px;display:grid;place-items:center;overflow:hidden;color:#c8d4ef}.video-wrap video{max-width:100%;max-height:440px}.empty{padding:50px 10px;text-align:center}.metrics{display:grid;grid-template-columns:1fr 1fr;gap:12px}.metric{background:#f7f9fc;border:1px solid var(--l);padding:15px;border-radius:14px}.metric span{display:block;color:var(--m);font-size:12px}.metric b{display:block;font-size:28px;margin-top:5px}.timeline{display:grid;gap:8px;margin-top:14px}.timeline label{display:flex;justify-content:space-between;color:var(--m);font-size:12px}.timeline input{width:100%}.status{display:inline-flex;align-items:center;gap:6px;color:var(--m);font-size:13px}.dot{width:8px;height:8px;border-radius:50%;background:#98a2b3}.dot.ok{background:#168a5a}.actions{display:flex;flex-wrap:wrap;gap:8px}.trial{display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--l)}.right-sticky{position:sticky;top:15px;align-self:start}.footer{text-align:center;color:var(--m);font-size:12px;padding:12px 0 30px}@media(max-width:850px){.grid{grid-template-columns:1fr}.right-sticky{position:static}header{align-items:flex-start;flex-direction:column}}@media print{header,.notice,.controls,.drop,.actions,.footer{display:none!important}body{background:#fff}.panel{box-shadow:none}.grid{display:block}}
-+</style><script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script><style>.video-wrap{position:relative}.skeleton-canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}.ai-panel{margin-top:12px;padding:12px;border:1px solid #c7d6f7;background:#f5f8ff;border-radius:12px}.ai-panel .actions{margin-top:8px}</style></head><body><header><div><h1>JumpLab（JL）</h1><p>外骨骼跳躍影像分析｜研究、教學與運動表現觀察</p></div><div class="version">模擬版 V3 · 本機處理</div></header><main>
-<section class="notice"><strong>跳躍前請先確認安全狀況</strong><div>本工具不是醫療診斷或測力板替代品；影片與姿態資料僅在本機處理。</div><ul><li>測試區域平整乾燥、無障礙物，並有足夠落地空間。</li><li>目前沒有疼痛、近期受傷、胸痛、異常呼吸困難或明顯不適。</li><li>已穿著止滑鞋並完成熱身；出現不適請立即停止。</li></ul><label class="check"><input id="safe" type="checkbox"><span>我已閱讀並確認以上全部安全事項。若任何一項不符合，請不要進行跳躍測驗。</span></label></section>
-<div class="grid"><div><section class="panel controls"><h2>1｜設定測驗</h2><div class="toolbar"><div class="field"><label>測驗</label><select id="testType"><option>CMJ 下蹲跳</option><option>SJ 蹲跳</option><option>DJ Drop Jump</option></select></div><div class="field"><label>影片 FPS</label><select id="fps"><option>30</option><option>60</option><option>120</option><option selected>240</option></select></div></div><h3>2｜匯入側面跳躍影片</h3><label class="drop" for="videoFile"><strong>點此選擇影片</strong><br><span class="small">建議完整呈現頭部與腳掌；影片不會上傳</span><input id="videoFile" type="file" accept="video/*"></label></section>
-<section class="panel"><div class="video-wrap" id="videoWrap"><div class="empty">請先勾選安全確認，再匯入影片</div><canvas id="skeletonCanvas" class="skeleton-canvas" hidden></canvas><video id="video" controls hidden></video></div><div class="timeline"><label><span>剪輯起點</span><span id="startText">00:00.000</span></label><input id="start" type="range" min="0" max="0" step=".001" value="0" disabled><label><span>剪輯終點</span><span id="endText">00:00.000</span></label><input id="end" type="range" min="0" max="0" step=".001" value="0" disabled><label><span>V3 逐格時間軸</span><span id="frameText">00:00.000｜Frame 0 / 1</span></label><input id="frame" type="range" min="0" max="0" step="1" value="0" disabled></div><div class="actions" style="margin-top:12px"><button id="prev10" class="ghost" disabled>−10 格</button><button id="prev" class="ghost" disabled>上一格</button><button id="play" class="primary" disabled>播放</button><button id="next" class="ghost" disabled>下一格</button><button id="next10" class="ghost" disabled>＋10 格</button></div><div class="actions" style="margin-top:12px"><button id="markT" disabled>標記 T｜腳尖離地</button><button id="markL" disabled>標記 L｜首次落地</button><button id="clearMarks" class="danger" disabled>清除標記</button></div><div class="status" style="margin-top:12px"><span id="stateDot" class="dot"></span><span id="videoStatus">尚未選擇影片</span></div></section></div>
-<aside class="right-sticky"><section class="panel"><h2>目前分析結果</h2><div class="metrics"><div class="metric"><span>FLIGHT TIME</span><b id="flight">—</b><span>秒</span></div><div class="metric"><span>JUMP HEIGHT</span><b id="height">—</b><span>公分</span></div></div><p class="small">跳高依滯空時間換算：h = 9.81 × t² ÷ 8。T／L 可逐格人工複核。</p><div class="actions"><button id="saveTrial" class="primary" disabled>儲存本次檢測（最多 3 次）</button><button id="copy" disabled>複製結果</button><button id="print" class="ghost">列印／另存 PDF</button></div></section><section class="panel"><h2>試跳趨勢</h2><div id="trials"><div class="small">尚未儲存試跳</div></div></section></aside></div>
-<section class="panel"><h2>選手基本資料</h2><div class="toolbar"><div class="field"><label>單位</label><input id="unit" placeholder="例如：A001"></div><div class="field"><label>檢測時間</label><input id="date" type="date"></div><div class="field"><label>姓名</label><input id="name"></div><div class="field"><label>身高（cm）</label><input id="stature" type="number"></div><div class="field"><label>體重（kg）</label><input id="weight" type="number"></div><div class="field"><label>年齡</label><input id="age" type="number"></div><div class="field"><label>性別</label><select id="sex"><option>請選擇</option><option>男性</option><option>女性</option><option>其他／不提供</option></select></div><div class="field"><label>運動專項</label><input id="sport"></div></div></section><section class="panel"><h2>分析摘要</h2><p id="summary">請完成安全確認並匯入影片。這個模擬版使用手動 T／L 標記計算結果，方便先驗證實驗流程。</p><p class="small">AI 信心、外骨骼、關節角度與地板線等進階項目保留為未來可插入的分析模組。</p></section><div class="footer">JumpLab V3 模擬版｜本機處理｜僅供研究、教學與運動表現觀察</div><section class="ai-panel"><strong>外骨骼與 AI 自動辨識</strong><div class="small">瀏覽器端姿態模型；影片不會上傳。AI 會先建立地面基準，再判定腳底離地與再次接地。</div><div class="toolbar" style="margin-top:8px"><div class="field"><label>分析模式</label><select id="gaitMode"><option value="jump">跳躍滯空</option><option value="gait">跑步步態</option></select></div><div class="field"><label>拍攝方向</label><select id="viewMode"><option value="side">側面</option><option value="front">正面</option></select></div></div><div class="actions"><button id="skeletonToggle" class="ghost">外骨骼：開</button><button id="aiAnalyze" class="primary">AI 自動辨識</button><button id="aiStop" class="danger" disabled>停止 AI</button></div><div id="aiStatus" class="small" style="margin-top:8px">AI 尚未啟動</div></section></main>
-<script>
-const $=x=>document.getElementById(x),s=$("safe"),f=$("videoFile"),v=$("video"),st={fps:240,d:0,fr:0,T:null,L:null,trials:[]};$("date").value=new Date().toISOString().slice(0,10);const tm=x=>new Date(1e3*Math.max(0,+x||0)).toISOString().slice(14,23);function sync(){st.fr=+$("frame").value;v.currentTime=st.fr/st.fps;$("frameText").textContent=`${tm(st.fr/st.fps)}｜Frame ${st.fr} / ${$("frame").max}`;$("startText").textContent=tm($("start").value);$("endText").textContent=tm($("end").value)}function step(n){$("frame").value=Math.max(0,Math.min(+$('frame').max,+$('frame').value+n));sync()}function result(){if(st.T!==null&&st.L!==null){let t=Math.max(0,st.L-st.T),h=9.81*t*t/8;$("flight").textContent=t.toFixed(3);$("height").textContent=(100*h).toFixed(1);$("copy").disabled=false;$("saveTrial").disabled=st.trials.length>=3}else{$("flight").textContent=$("height").textContent="—";$("copy").disabled=$("saveTrial").disabled=true}}
-s.onchange=()=>{if(!s.checked){f.value="";v.hidden=true;$("videoStatus").textContent="請先勾選安全確認"}};f.onchange=()=>{let file=f.files[0];if(!file)return;v.src=URL.createObjectURL(file);v.hidden=false;$("videoWrap").querySelector('.empty').style.display='none';v.onloadedmetadata=()=>{st.d=v.duration;st.fps=+$('fps').value;['start','end'].forEach(x=>{$(x).max=st.d;$(x).disabled=false});$('end').value=st.d;$('frame').max=Math.max(0,Math.floor(st.d*st.fps)-1);$('frame').disabled=false;['prev10','prev','play','next','next10','markT','markL','clearMarks','saveTrial','copy'].forEach(x=>$(x).disabled=false);$('videoStatus').textContent=`${file.name}｜${tm(st.d)}｜${st.fps} FPS`;$('stateDot').className='dot ok';sync()}};$('fps').onchange=()=>{st.fps=+$('fps').value;if(st.d){$('frame').max=Math.max(0,Math.floor(st.d*st.fps)-1);sync()}};$('frame').oninput=sync;$('start').oninput=sync;$('end').oninput=sync;
-$('prev10').onclick=()=>step(-10);$('prev').onclick=()=>step(-1);$('next').onclick=()=>step(1);$('next10').onclick=()=>step(10);$('play').onclick=()=>v.paused?v.play():v.pause();v.onplay=()=>$('play').textContent='暫停';v.onpause=()=>$('play').textContent='播放';function mark(x){st[x]=st.fr/st.fps;result();$('summary').textContent=`已標記 ${x==='T'?'腳尖離地（T）':'首次落地（L）'}：${tm(st[x])}`}$('markT').onclick=()=>mark('T');$('markL').onclick=()=>mark('L');$('clearMarks').onclick=()=>{st.T=st.L=null;result();$('summary').textContent='已清除 T／L 標記'};
-$('saveTrial').onclick=()=>{st.trials.push({n:st.trials.length+1,t:+$('flight').textContent,h:+$('height').textContent,type:$('testType').value});$('trials').innerHTML=st.trials.map(x=>`<div class="trial"><span><b>試跳 ${x.n}</b><br><span class="small">${x.type}</span></span><span><b>${x.h.toFixed(1)} cm</b><br><span class="small">${x.t.toFixed(3)} s</span></span></div>`).join('');$('saveTrial').disabled=st.trials.length>=3};$('copy').onclick=async()=>{let t=`JumpLab V3\n測驗：${$('testType').value}\nFlight Time：${$('flight').textContent} s\nJump Height：${$('height').textContent} cm\n姓名：${$('name').value||'—'}\n日期：${$('date').value}`;try{await navigator.clipboard.writeText(t);$('copy').textContent='已複製';setTimeout(()=>$('copy').textContent='複製結果',1200)}catch{alert(t)}};$('print').onclick=()=>window.print();result();
-</script><script src="./ai-pose.js"></script><script id="JL_FIX_V2">
-(() => {
-  const q = id => document.getElementById(id);
-  const video = q('video'), file = q('videoFile'), safe = q('safe');
-  const fpsEl = q('fps'), frameEl = q('frame'), statusEl = q('videoStatus'), dotEl = q('stateDot');
-  let tMark = null, lMark = null;
-  const readFps = () => Number(fpsEl.value) || 30;
-  const currentTime = () => Math.max(0, Number(video.currentTime) || Number(frameEl.value || 0) / readFps());
-  const frameText = time => `目前時間 ${time.toFixed(3)} 秒｜Frame ${Math.round(time * readFps())}`;
-  const setStatus = (text, ok=false) => { statusEl.textContent = text; dotEl.className = ok ? 'dot ok' : 'dot'; };
-  const refreshResult = () => {
-    if (tMark !== null && lMark !== null) {
-      const flight = Math.max(0, lMark - tMark), height = 9.81 * flight * flight / 8 * 100;
-      q('flight').textContent = flight.toFixed(3); q('height').textContent = height.toFixed(1);
-      q('copy').disabled = false; q('saveTrial').disabled = false;
-      q('summary').textContent = `T 起跳 ${tMark.toFixed(3)} 秒，L 落地 ${lMark.toFixed(3)} 秒；滯空 ${flight.toFixed(3)} 秒，估算跳高 ${height.toFixed(1)} 公分。`;
-    } else { q('flight').textContent='—'; q('height').textContent='—'; q('copy').disabled=true; q('saveTrial').disabled=true; }
-  };
-  const mark = (which) => {
-    if (!video.src || !Number.isFinite(video.duration)) { setStatus('請先成功匯入可播放的影片'); return; }
-    const now = currentTime();
-    if (which === 'T') tMark = now; else lMark = now;
-    frameEl.value = Math.round(now * readFps());
-    q('frameText').textContent = frameText(now);
-    setStatus(`${which === 'T' ? '已標記起跳 T' : '已標記落地 L'}：${now.toFixed(3)} 秒`, true);
-    refreshResult();
-  };
-  q('markT').onclick = () => mark('T'); q('markL').onclick = () => mark('L');
-  q('clearMarks').onclick = () => { tMark=null; lMark=null; refreshResult(); setStatus('已清除起跳與落地標記'); };
-  q('play').addEventListener('click', () => setTimeout(() => setStatus(video.paused ? '影片已暫停，可標記目前影格' : '影片播放中，請暫停後再標記', true), 50));
-  video.addEventListener('error', () => setStatus('影片無法解碼；請轉成 MP4（H.264/AAC）後再試')); 
-  video.addEventListener('loadeddata', () => setStatus(`影片已載入，可拖曳逐格時間軸並標記 T／L`, true));
-  file.addEventListener('change', () => {
-    if (!safe.checked) { setStatus('請先勾選安全確認，再匯入影片'); file.value=''; return; }
-    tMark=null; lMark=null; refreshResult();
-    setStatus('正在讀取影片…');
-  });
-  q('fps').addEventListener('change', () => { tMark=null; lMark=null; refreshResult(); });
-  const save = () => {
-    if (tMark === null || lMark === null) { setStatus('請先標記起跳 T 與落地 L'); return; }
-    const item={type:q('testType').value,t:+q('flight').textContent,h:+q('height').textContent,date:q('date').value,name:q('name').value};
-    const list=JSON.parse(localStorage.getItem('jumplab-trials')||'[]'); if(list.length>=3) list.shift(); list.push(item); localStorage.setItem('jumplab-trials',JSON.stringify(list));
-    q('trials').innerHTML=list.map((x,i)=>`<div class="trial"><span><b>試跳 ${i+1}</b><br><span class="small">${x.type}｜${x.name||'未填姓名'}</span></span><span><b>${Number(x.h).toFixed(1)} cm</b><br><span class="small">${Number(x.t).toFixed(3)} s</span></span></div>`).join('');
-    setStatus(`已保存試跳 ${list.length} 次`, true);
-  };
-  q('saveTrial').onclick=save;
-  const oldTrials=JSON.parse(localStorage.getItem('jumplab-trials')||'[]'); if(oldTrials.length){q('trials').innerHTML=oldTrials.map((x,i)=>`<div class="trial"><span><b>試跳 ${i+1}</b><br><span class="small">${x.type}｜${x.name||'未填姓名'}</span></span><span><b>${Number(x.h).toFixed(1)} cm</b><br><span class="small">${Number(x.t).toFixed(3)} s</span></span></div>`).join('');}
-})();
-</script><script id="JL_FIX_V3">
-(() => {
-  const q=id=>document.getElementById(id), video=q('video'), file=q('videoFile'), safe=q('safe'), fps=q('fps'), frame=q('frame');
-  const status=text=>{q('videoStatus').textContent=text;};
-  safe.onchange=()=>{if(!safe.checked){file.value='';video.removeAttribute('src');video.load();status('請先勾選安全確認');}};
-  file.onchange=()=>{
-    if(!safe.checked){file.value='';status('請先勾選安全確認，再匯入影片');return;}
-    const selected=file.files&&file.files[0]; if(!selected)return;
-    const url=URL.createObjectURL(selected); video.src=url; video.hidden=false; q('videoWrap').querySelector('.empty').style.display='none'; status('正在讀取影片…');
-    video.onloadedmetadata=()=>{const d=video.duration, rate=Number(fps.value)||30;['start','end'].forEach(id=>{q(id).max=d;q(id).disabled=false});q('end').value=d;frame.max=Math.max(0,Math.floor(d*rate)-1);frame.disabled=false;['prev10','prev','play','next','next10','markT','markL','clearMarks','saveTrial','copy'].forEach(id=>q(id).disabled=false);status(`${selected.name}｜影片已載入，可標記起跳 T／落地 L`) };
-    video.onerror=()=>status('影片無法解碼，請轉成 MP4（H.264/AAC）後再試');
-  };
-})();
-</script><script id="JL_FIX_V4">
-(() => {
-  const q=id=>document.getElementById(id);
-  const read=()=>{try{return JSON.parse(localStorage.getItem('jumplab-trials')||'[]')}catch{return[]}};
-  const write=list=>{try{localStorage.setItem('jumplab-trials',JSON.stringify(list));return true}catch{return false}};
-  q('saveTrial').onclick=()=>{
-    const flight=Number(q('flight').textContent), height=Number(q('height').textContent);
-    if(!Number.isFinite(flight)||!Number.isFinite(height)){q('videoStatus').textContent='請先完成起跳 T 與落地 L 標記';return;}
-    const list=read();if(list.length>=3)list.shift();list.push({type:q('testType').value,t:flight,h:height,date:q('date').value,name:q('name').value});
-    const ok=write(list);q('videoStatus').textContent=ok?`已保存試跳 ${list.length} 次`:'瀏覽器禁止本機儲存；本次數據仍可複製或列印';
-    q('trials').innerHTML=list.map((x,i)=>`<div class="trial"><span><b>試跳 ${i+1}</b><br><span class="small">${x.type}｜${x.name||'未填姓名'}</span></span><span><b>${Number(x.h).toFixed(1)} cm</b><br><span class="small">${Number(x.t).toFixed(3)} s</span></span></div>`).join('');
-  };
-})();
-</script></body></html>
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>JumpLab v3.6 Pro - 運動科學跳躍與步態分析系統</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- MediaPipe Pose -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap');
+    body {
+      font-family: 'Noto Sans TC', sans-serif;
+      background-color: #090D16;
+      color: #E2E8F0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .font-num {
+      font-family: 'Chakra Petch', monospace;
+    }
+    /* 隱藏橫向滾動條但保留滑動功能 */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- 頂部導航列 (手機/電腦響應式通用) -->
+  <header class="border-b border-slate-800/90 bg-slate-900/95 backdrop-blur px-3 sm:px-6 py-3 flex items-center justify-between gap-2 sticky top-0 z-50">
+    <div class="flex items-center gap-2.5 shrink-0">
+      <div class="h-8 w-8 sm:h-9 sm:w-9 rounded-lg bg-emerald-500/15 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
+        <i data-lucide="activity" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+      </div>
+      <div>
+        <h1 class="font-bold text-base sm:text-lg text-slate-100 flex items-center gap-1.5">
+          JumpLab <span class="text-[11px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-num">v3.6</span>
+        </h1>
+        <p class="hidden sm:block text-[11px] text-slate-400">地面接觸狀態機 · 跳躍高度 · 跑步步態關節角度</p>
+      </div>
+    </div>
+
+    <!-- 主檢測模式分頁 (跳躍檢測 vs 跑步步態分析) -->
+    <div class="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs font-medium overflow-x-auto no-scrollbar">
+      <button onclick="switchMainCategory('JUMP')" id="tab-JUMP" class="px-3 py-1.5 rounded-lg bg-emerald-500 text-slate-950 font-bold transition whitespace-nowrap flex items-center gap-1.5">
+        <i data-lucide="arrow-up-circle" class="w-3.5 h-3.5"></i> 垂直跳躍檢測
+      </button>
+      <button onclick="switchMainCategory('GAIT')" id="tab-GAIT" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 transition whitespace-nowrap flex items-center gap-1.5">
+        <i data-lucide="footprints" class="w-3.5 h-3.5"></i> 跑步外骨骼步態
+      </button>
+    </div>
+
+    <!-- 右側動作按鈕 -->
+    <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+      <label class="cursor-pointer px-2.5 sm:px-3.5 py-1.5 sm:py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-lg text-xs font-bold flex items-center gap-1.5 transition shadow-lg shadow-emerald-500/20">
+        <i data-lucide="upload" class="w-3.5 h-3.5"></i>
+        <span class="hidden sm:inline">上傳影片</span>
+        <span class="sm:hidden">上傳</span>
+        <input type="file" id="video-input" accept="video/*" class="hidden" onchange="handleVideoUpload(event)">
+      </label>
+      <button onclick="toggleWebcam()" id="btn-webcam" class="px-2.5 py-1.5 sm:py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg text-xs font-semibold flex items-center gap-1 transition" title="相機即時分析">
+        <i data-lucide="camera" class="w-3.5 h-3.5 text-sky-400"></i>
+        <span class="hidden md:inline">相機</span>
+      </button>
+      <button onclick="startSimulation()" class="px-2.5 py-1.5 sm:py-2 bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 border border-indigo-500/40 rounded-lg text-xs font-semibold flex items-center gap-1 transition">
+        <i data-lucide="play" class="w-3.5 h-3.5"></i>
+        <span>模擬示範</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- 子選項導覽列 (依據主分類動態切換：跳躍子模式 或 跑步視角切換) -->
+  <div class="bg-slate-900/60 border-b border-slate-800/80 px-3 sm:px-6 py-2">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+      <!-- 跳躍子模式 -->
+      <div id="subnav-JUMP" class="flex items-center gap-1.5 text-xs">
+        <span class="text-slate-400 mr-1">跳躍項目：</span>
+        <button onclick="setJumpSubMode('CMJ')" id="btn-jump-CMJ" class="px-2.5 py-1 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-semibold">CMJ 反向跳</button>
+        <button onclick="setJumpSubMode('SJ')" id="btn-jump-SJ" class="px-2.5 py-1 rounded-md bg-slate-800 text-slate-400 hover:text-slate-200">SJ 靜態蹲跳</button>
+        <button onclick="setJumpSubMode('DJ')" id="btn-jump-DJ" class="px-2.5 py-1 rounded-md bg-slate-800 text-slate-400 hover:text-slate-200">Drop Jump 深跳</button>
+      </div>
+
+      <!-- 跑步步態視角選擇 -->
+      <div id="subnav-GAIT" class="hidden flex items-center gap-1.5 text-xs">
+        <span class="text-slate-400 mr-1">步態分析視角：</span>
+        <button onclick="setGaitView('SIDE')" id="btn-gait-SIDE" class="px-2.5 py-1 rounded-md bg-sky-500/20 text-sky-300 border border-sky-500/40 font-semibold">側面矢狀面 (Sagittal)</button>
+        <button onclick="setGaitView('FRONT')" id="btn-gait-FRONT" class="px-2.5 py-1 rounded-md bg-slate-800 text-slate-400 hover:text-slate-200">正面冠狀面 (Frontal)</button>
+      </div>
+
+      <!-- 取樣率與狀態提示 -->
+      <div class="flex items-center gap-2 text-xs ml-auto">
+        <span id="state-indicator" class="px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-num text-[11px]">狀態: 待命就緒</span>
+        <select id="select-fps" class="bg-slate-950 border border-slate-700 rounded px-2 py-0.5 text-xs font-num text-slate-200 outline-none" onchange="setVideoFPS(this.value)">
+          <option value="30">30 FPS</option>
+          <option value="60" selected>60 FPS</option>
+          <option value="120">120 FPS</option>
+          <option value="240">240 FPS</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- 主分析工作區 -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
+
+    <!-- 左側視訊畫布與控制器 (8 Cols) -->
+    <div class="lg:col-span-8 flex flex-col gap-3 sm:gap-4">
+      <div id="drop-zone" class="relative bg-slate-950 rounded-2xl border-2 border-dashed border-slate-800 hover:border-emerald-500/50 overflow-hidden shadow-2xl flex items-center justify-center min-h-[340px] sm:min-h-[480px] transition">
+        <canvas id="output-canvas" class="w-full h-full object-contain max-h-[540px] touch-none"></canvas>
+        <video id="input-video" class="hidden" playsinline webkit-playsinline muted></video>
+
+        <!-- 初始待命畫面 -->
+        <div id="idle-placeholder" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/90 text-center p-5">
+          <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center mb-3 text-emerald-400">
+            <i data-lucide="scan-line" class="w-7 h-7 sm:w-8 sm:h-8"></i>
+          </div>
+          <h3 class="text-sm sm:text-base font-bold text-slate-200">上傳影片即刻自動分析</h3>
+          <p class="text-xs text-slate-400 max-w-md mt-1 mb-4 leading-relaxed">
+            支援垂直跳躍（自動追蹤腳尖離地與觸地時間）與跑步步態正側面關節力線分析。
+          </p>
+          <div class="flex flex-wrap justify-center gap-2">
+            <button onclick="document.getElementById('video-input').click()" class="px-4 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-lg shadow-emerald-500/20 transition">
+              <i data-lucide="upload" class="w-4 h-4"></i> 選擇檢測影片
+            </button>
+            <button onclick="startSimulation()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold rounded-xl text-xs flex items-center gap-1.5 border border-slate-700 transition">
+              <i data-lucide="play" class="w-4 h-4 text-indigo-400"></i> 觀看 AI 演示
+            </button>
+          </div>
+        </div>
+
+        <!-- 自動分析中遮罩 -->
+        <div id="analyzing-overlay" class="hidden absolute inset-0 bg-slate-950/85 backdrop-blur-sm flex flex-col items-center justify-center p-6 z-20">
+          <div class="w-11 h-11 rounded-full border-4 border-emerald-500/20 border-t-emerald-500 animate-spin mb-3"></div>
+          <h4 class="text-sm font-semibold text-slate-200">AI 運動學逐格追蹤中...</h4>
+          <p class="text-xs text-slate-400 mt-1 font-num" id="analysis-progress-text">進度: 0%</p>
+        </div>
+
+        <!-- 左上角即時狀態徽章 -->
+        <div class="absolute top-3 left-3 flex flex-col gap-1 z-10 pointer-events-none">
+          <span id="badge-active-mode" class="px-2.5 py-1 rounded-md bg-slate-900/85 border border-slate-700/70 text-xs font-bold text-emerald-400 backdrop-blur">CMJ 垂直跳躍</span>
+          <span id="badge-phase" class="px-2.5 py-0.5 rounded-md bg-slate-900/85 border border-slate-700/70 text-[11px] font-num text-slate-300 backdrop-blur">地面接觸檢測</span>
+        </div>
+      </div>
+
+      <!-- 仿 JumpLab 簡潔時間軸與定錨微調列 -->
+      <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3 sm:p-4 flex flex-col gap-3">
+        <div class="flex items-center justify-between gap-2">
+          <div class="flex items-center gap-2">
+            <button onclick="togglePlayPause()" id="btn-play-pause" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-200 text-xs font-semibold flex items-center gap-1">
+              <i data-lucide="play" class="w-3.5 h-3.5"></i> 播放/暫停
+            </button>
+            <span class="text-[11px] text-slate-400 font-num" id="current-frame-info">Frame: 0 / 0 (0.000s)</span>
+          </div>
+          <button onclick="runDeterministicAnalysis()" class="px-2.5 py-1.5 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-400 text-xs font-semibold rounded-lg flex items-center gap-1 transition">
+            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> 重新計算
+          </button>
+        </div>
+
+        <!-- 流暢滑桿 -->
+        <input type="range" id="video-scrubber" min="0" max="100" value="0" step="0.001"
+               class="w-full h-2.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500">
+
+        <!-- 跳躍專屬定錨微調按鈕 (跑步模式自動隱藏) -->
+        <div id="jump-anchor-controls" class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-slate-800/70 text-xs">
+          <!-- 起飛瞬間 -->
+          <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800 flex items-center justify-between">
+            <div>
+              <span class="text-[11px] text-slate-400 block">1. 腳離地（起飛時間）</span>
+              <span id="lbl-takeoff-info" class="font-num font-bold text-emerald-400 text-xs">F: -- (0.000s)</span>
+            </div>
+            <div class="flex items-center gap-1">
+              <button onclick="adjustTakeoffFrame(-1)" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 rounded text-slate-200 font-num">-1</button>
+              <button onclick="seekToFrame(takeoffFrame)" class="px-2 py-1.5 bg-emerald-500/20 text-emerald-300 rounded font-semibold">檢視</button>
+              <button onclick="adjustTakeoffFrame(1)" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 rounded text-slate-200 font-num">+1</button>
+            </div>
+          </div>
+
+          <!-- 起跳結束 -->
+          <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800 flex items-center justify-between">
+            <div>
+              <span class="text-[11px] text-slate-400 block">3. 再次觸地（起跳結束）</span>
+              <span id="lbl-landing-info" class="font-num font-bold text-sky-400 text-xs">F: -- (0.000s)</span>
+            </div>
+            <div class="flex items-center gap-1">
+              <button onclick="adjustLandingFrame(-1)" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 rounded text-slate-200 font-num">-1</button>
+              <button onclick="seekToFrame(landingFrame)" class="px-2 py-1.5 bg-sky-500/20 text-sky-300 rounded font-semibold">檢視</button>
+              <button onclick="adjustLandingFrame(1)" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 rounded text-slate-200 font-num">+1</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 下方資訊欄：關節運動學時序曲線圖 -->
+      <div class="bg-slate-900/85 border border-slate-800 rounded-xl p-3 sm:p-4 flex flex-col gap-2.5">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div class="flex items-center gap-1.5">
+            <i data-lucide="trending-up" class="w-4 h-4 text-emerald-400"></i>
+            <span id="chart-title" class="text-xs font-bold text-slate-200">關節角度時序曲線圖 (Angle-Time Waveform)</span>
+          </div>
+          <div id="chart-legend" class="flex items-center gap-3 text-[11px]">
+            <span class="flex items-center gap-1 text-slate-300"><span class="w-2.5 h-2.5 rounded-full bg-[#10B981]"></span> 膝關節</span>
+            <span class="flex items-center gap-1 text-slate-300"><span class="w-2.5 h-2.5 rounded-full bg-[#F59E0B]"></span> 髖關節</span>
+          </div>
+        </div>
+        <div class="w-full h-40 sm:h-44 relative">
+          <canvas id="angle-chart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- 右側檢測數據儀表板 (4 Cols) -->
+    <div class="lg:col-span-4 flex flex-col gap-4">
+
+      <!-- 面板 A：垂直跳躍評估面板 -->
+      <div id="panel-JUMP" class="bg-slate-900/95 rounded-2xl border border-slate-800 p-4 sm:p-5 shadow-xl flex flex-col gap-4">
+        <div class="flex items-center justify-between pb-2.5 border-b border-slate-800">
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-400">垂直跳躍評估報告</span>
+          <span class="text-[11px] px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-num">Ground-Contact AI</span>
+        </div>
+
+        <!-- 三階段狀態條 (起飛 -> 滯空 -> 結束) -->
+        <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 flex items-center justify-between text-center text-xs">
+          <div class="flex-1">
+            <span class="text-[10px] text-slate-400 block">起飛時間</span>
+            <span id="stage-takeoff-t" class="font-num font-bold text-emerald-400">0.000s</span>
+          </div>
+          <i data-lucide="arrow-right" class="w-3.5 h-3.5 text-slate-600"></i>
+          <div class="flex-1 bg-emerald-500/10 py-1 px-1.5 rounded-lg border border-emerald-500/20">
+            <span class="text-[10px] text-emerald-300 block">空中滯空時間</span>
+            <span id="stage-flight-t" class="font-num font-bold text-emerald-400 text-sm">0.000s</span>
+          </div>
+          <i data-lucide="arrow-right" class="w-3.5 h-3.5 text-slate-600"></i>
+          <div class="flex-1">
+            <span class="text-[10px] text-slate-400 block">起跳結束</span>
+            <span id="stage-landing-t" class="font-num font-bold text-sky-400">0.000s</span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div class="bg-slate-950 p-3 rounded-xl border border-slate-800/90">
+            <span class="text-xs text-slate-400">跳躍高度</span>
+            <div class="mt-1 flex items-baseline gap-1">
+              <span id="metric-height" class="text-3xl font-bold font-num text-emerald-400">0.0</span>
+              <span class="text-xs text-slate-500">cm</span>
+            </div>
+            <span class="text-[10px] text-slate-500 font-num">H = 1/8 · g · t²</span>
+          </div>
+
+          <div class="bg-slate-950 p-3 rounded-xl border border-slate-800/90">
+            <span class="text-xs text-slate-400">滯空時間</span>
+            <div class="mt-1 flex items-baseline gap-1">
+              <span id="metric-flight-ms" class="text-3xl font-bold font-num text-slate-100">0</span>
+              <span class="text-xs text-slate-500">ms</span>
+            </div>
+            <span id="metric-flight-sec" class="text-[10px] text-slate-500 font-num">0.000 秒</span>
+          </div>
+
+          <div class="bg-slate-950 p-3 rounded-xl border border-slate-800/90">
+            <span class="text-xs text-slate-400">離地初速</span>
+            <div class="mt-1 flex items-baseline gap-1">
+              <span id="metric-velocity" class="text-2xl font-bold font-num text-slate-200">0.00</span>
+              <span class="text-xs text-slate-500">m/s</span>
+            </div>
+          </div>
+
+          <div class="bg-slate-950 p-3 rounded-xl border border-slate-800/90">
+            <span class="text-xs text-slate-400">爆發功率</span>
+            <div class="mt-1 flex items-baseline gap-1">
+              <span id="metric-power" class="text-2xl font-bold font-num text-amber-400">0</span>
+              <span class="text-xs text-slate-500">W</span>
+            </div>
+            <span id="metric-rel-power" class="text-[10px] text-slate-500 font-num">0.0 W/kg</span>
+          </div>
+        </div>
+
+        <div id="specialized-metrics" class="bg-slate-950/70 p-3 rounded-xl border border-slate-800 text-xs flex flex-col gap-1.5"></div>
+      </div>
+
+      <!-- 面板 B：跑步外骨骼步態關節角度分析面板 -->
+      <div id="panel-GAIT" class="hidden bg-slate-900/95 rounded-2xl border border-slate-800 p-4 sm:p-5 shadow-xl flex flex-col gap-4">
+        <div class="flex items-center justify-between pb-2.5 border-b border-slate-800">
+          <span class="text-xs font-bold uppercase tracking-wider text-sky-400">跑步步態生物力學分析</span>
+          <span id="badge-gait-view" class="text-[11px] px-2 py-0.5 rounded bg-sky-500/15 text-sky-300 border border-sky-500/30 font-num">側面矢狀面</span>
+        </div>
+
+        <!-- 側面分析指標 (Sagittal View) -->
+        <div id="gait-metrics-SIDE" class="flex flex-col gap-3">
+          <div class="grid grid-cols-2 gap-2.5">
+            <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+              <span class="text-[11px] text-slate-400">軀幹前傾角</span>
+              <div class="mt-1 flex items-baseline gap-1">
+                <span id="gait-trunk-lean" class="text-2xl font-bold font-num text-amber-400">--</span>
+                <span class="text-xs text-slate-500">°</span>
+              </div>
+              <span class="text-[10px] text-emerald-400">標準跑姿: 5° ~ 10°</span>
+            </div>
+
+            <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+              <span class="text-[11px] text-slate-400">支撐期最大膝屈曲</span>
+              <div class="mt-1 flex items-baseline gap-1">
+                <span id="gait-knee-flex" class="text-2xl font-bold font-num text-emerald-400">--</span>
+                <span class="text-xs text-slate-500">°</span>
+              </div>
+              <span class="text-[10px] text-slate-400">理想緩衝: 135° ~ 145°</span>
+            </div>
+
+            <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+              <span class="text-[11px] text-slate-400">髖關節後蹬伸展</span>
+              <div class="mt-1 flex items-baseline gap-1">
+                <span id="gait-hip-ext" class="text-2xl font-bold font-num text-sky-400">--</span>
+                <span class="text-xs text-slate-500">°</span>
+              </div>
+              <span class="text-[10px] text-slate-400">推進延展: > 190°</span>
+            </div>
+
+            <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+              <span class="text-[11px] text-slate-400">著地型態判定</span>
+              <div class="mt-1">
+                <span id="gait-foot-strike" class="text-sm font-bold text-emerald-300">待分析</span>
+              </div>
+              <span class="text-[10px] text-slate-400">足底傾斜角估算</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 正面分析指標 (Frontal View) -->
+        <div id="gait-metrics-FRONT" class="hidden flex flex-col gap-3">
+          <div class="grid grid-cols-2 gap-2.5">
+            <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+              <span class="text-[11px] text-slate-400">骨盆水平傾斜角</span>
+              <div class="mt-1 flex items-baseline gap-1">
+                <span id="gait-pelvic-drop" class="text-2xl font-bold font-num text-amber-400">--</span>
+                <span class="text-xs text-slate-500">°</span>
+              </div>
+              <span class="text-[10px] text-emerald-400">正常穩定: < 5°</span>
+            </div>
+
+            <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+              <span class="text-[11px] text-slate-400">動態膝力線 (Valgus)</span>
+              <div class="mt-1 flex items-baseline gap-1">
+                <span id="gait-knee-valgus" class="text-2xl font-bold font-num text-emerald-400">--</span>
+                <span class="text-xs text-slate-500">°</span>
+              </div>
+              <span class="text-[10px] text-slate-400">正常力線: 170° ~ 180°</span>
+            </div>
+          </div>
+          <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs">
+            <span class="text-slate-400 block mb-1">正面下肢穩定度評估：</span>
+            <p id="gait-frontal-feedback" class="text-slate-200 font-medium">請上傳正面或背面跑步影片進行分析。</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 共用：當前影格即時關節角度卡片與參數設定 -->
+      <div class="bg-slate-900/90 rounded-2xl border border-slate-800 p-4 flex flex-col gap-3">
+        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">當前影格即時關節角度</span>
+        <div class="grid grid-cols-3 gap-2 text-center">
+          <div class="bg-slate-950 p-2 rounded-lg border border-slate-800/80">
+            <span class="text-[10px] text-slate-400 block">髖關節角</span>
+            <span id="live-hip-angle" class="font-num font-bold text-amber-400 text-sm">--°</span>
+          </div>
+          <div class="bg-slate-950 p-2 rounded-lg border border-slate-800/80">
+            <span class="text-[10px] text-slate-400 block">膝關節角</span>
+            <span id="live-knee-angle" class="font-num font-bold text-emerald-400 text-sm">--°</span>
+          </div>
+          <div class="bg-slate-950 p-2 rounded-lg border border-slate-800/80">
+            <span class="text-[10px] text-slate-400 block">踝關節角</span>
+            <span id="live-ankle-angle" class="font-num font-bold text-sky-400 text-sm">--°</span>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between text-xs pt-2 border-t border-slate-800">
+          <label for="input-weight" class="text-slate-400">受測者體重 (kg)</label>
+          <input type="number" id="input-weight" value="70" class="w-20 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-right text-xs font-num text-slate-200 outline-none" onchange="recalculateMetrics()">
+        </div>
+
+        <div class="flex gap-2 pt-1">
+          <button onclick="exportCSV()" class="flex-1 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition">
+            <i data-lucide="download" class="w-3.5 h-3.5"></i> 匯出 CSV 報告
+          </button>
+          <button onclick="copyResults()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold flex items-center justify-center transition" title="複製數據">
+            <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    // --- 全域狀態變數 ---
+    let mainCategory = 'JUMP'; // 'JUMP' | 'GAIT'
+    let jumpSubMode = 'CMJ';   // 'CMJ' | 'SJ' | 'DJ'
+    let gaitViewMode = 'SIDE'; // 'SIDE' | 'FRONT'
+    let videoFPS = 60;
+
+    let isWebcam = false;
+    let camera = null;
+    let isSimulating = false;
+    let simAnimId = null;
+
+    // 滑桿拖曳狀態鎖定
+    let isScrubbing = false;
+    let scrubWasPlaying = false;
+    let pendingSeekTime = null;
+    let isSeeking = false;
+
+    // 跳躍地面接觸狀態機定錨影格
+    let takeoffFrame = null;
+    let landingFrame = null;
+    let floorBaselineY = null; // 地面基準線 Y 座標 (0~1)
+    let totalFrames = 0;
+
+    let cmjHeightRecord = null;
+    let sjHeightRecord = null;
+    let angleTimeSeries = [];
+
+    const canvas = document.getElementById('output-canvas');
+    const ctx = canvas.getContext('2d');
+    const video = document.getElementById('input-video');
+    const scrubber = document.getElementById('video-scrubber');
+    const dropZone = document.getElementById('drop-zone');
+
+    lucide.createIcons();
+
+    // --- Chart.js 初始化 ---
+    const chartCtx = document.getElementById('angle-chart').getContext('2d');
+    const angleChart = new Chart(chartCtx, {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [
+          { label: '膝關節角', data: [], borderColor: '#10B981', borderWidth: 2.5, pointRadius: 0, tension: 0.25 },
+          { label: '髖關節角', data: [], borderColor: '#F59E0B', borderWidth: 2.5, pointRadius: 0, tension: 0.25 }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: false,
+        scales: {
+          x: { ticks: { color: '#64748B', maxTicksLimit: 7, font: { size: 9 } }, grid: { color: '#1E293B' } },
+          y: { min: 40, max: 200, ticks: { color: '#64748B', stepSize: 40, font: { size: 9 } }, grid: { color: '#1E293B' } }
+        },
+        plugins: { legend: { display: false } }
+      }
+    });
+
+    // --- MediaPipe Pose 初始化 ---
+    const pose = new Pose({
+      locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
+    });
+    pose.setOptions({
+      modelComplexity: 1,
+      smoothLandmarks: true,
+      minDetectionConfidence: 0.5,
+      minTrackingConfidence: 0.5
+    });
+    pose.onResults(onPoseResults);
+
+    // --- 1. 主分類切換 (垂直跳躍 vs 跑步步態) ---
+    function switchMainCategory(cat) {
+      mainCategory = cat;
+      stopSimulation();
+
+      const tabJump = document.getElementById('tab-JUMP');
+      const tabGait = document.getElementById('tab-GAIT');
+
+      if (cat === 'JUMP') {
+        tabJump.className = 'px-3 py-1.5 rounded-lg bg-emerald-500 text-slate-950 font-bold transition whitespace-nowrap flex items-center gap-1.5';
+        tabGait.className = 'px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 transition whitespace-nowrap flex items-center gap-1.5';
+
+        document.getElementById('subnav-JUMP').classList.remove('hidden');
+        document.getElementById('subnav-GAIT').classList.add('hidden');
+        document.getElementById('panel-JUMP').classList.remove('hidden');
+        document.getElementById('panel-GAIT').classList.add('hidden');
+        document.getElementById('jump-anchor-controls').classList.remove('hidden');
+
+        document.getElementById('badge-active-mode').innerText = `${jumpSubMode} 垂直跳躍`;
+        document.getElementById('badge-active-mode').className = 'px-2.5 py-1 rounded-md bg-slate-900/85 border border-slate-700/70 text-xs font-bold text-emerald-400 backdrop-blur';
+        document.getElementById('badge-phase').innerText = '地面接觸檢測';
+      } else {
+        tabGait.className = 'px-3 py-1.5 rounded-lg bg-sky-500 text-slate-950 font-bold transition whitespace-nowrap flex items-center gap-1.5';
+        tabJump.className = 'px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 transition whitespace-nowrap flex items-center gap-1.5';
+
+        document.getElementById('subnav-JUMP').classList.add('hidden');
+        document.getElementById('subnav-GAIT').classList.remove('hidden');
+        document.getElementById('panel-JUMP').classList.add('hidden');
+        document.getElementById('panel-GAIT').classList.remove('hidden');
+        document.getElementById('jump-anchor-controls').classList.add('hidden');
+
+        setGaitView(gaitViewMode);
+      }
+
+      if (video.src && video.duration > 0) {
+        runDeterministicAnalysis();
+      }
+    }
+
+    function setJumpSubMode(mode) {
+      jumpSubMode = mode;
+      ['CMJ', 'SJ', 'DJ'].forEach(m => {
+        const btn = document.getElementById(`btn-jump-${m}`);
+        btn.className = (m === mode)
+          ? 'px-2.5 py-1 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-semibold'
+          : 'px-2.5 py-1 rounded-md bg-slate-800 text-slate-400 hover:text-slate-200';
+      });
+      document.getElementById('badge-active-mode').innerText = `${mode} 垂直跳躍`;
+      updateSpecializedMetricsPanel();
+    }
+
+    function setGaitView(view) {
+      gaitViewMode = view;
+      const btnSide = document.getElementById('btn-gait-SIDE');
+      const btnFront = document.getElementById('btn-gait-FRONT');
+
+      if (view === 'SIDE') {
+        btnSide.className = 'px-2.5 py-1 rounded-md bg-sky-500/20 text-sky-300 border border-sky-500/40 font-semibold';
+        btnFront.className = 'px-2.5 py-1 rounded-md bg-slate-800 text-slate-400 hover:text-slate-200';
+        document.getElementById('gait-metrics-SIDE').classList.remove('hidden');
+        document.getElementById('gait-metrics-FRONT').classList.add('hidden');
+        document.getElementById('badge-active-mode').innerText = '跑步步態 · 側面分析';
+        document.getElementById('badge-gait-view').innerText = '側面矢狀面';
+        document.getElementById('chart-legend').innerHTML = `
+          <span class="flex items-center gap-1 text-slate-300"><span class="w-2.5 h-2.5 rounded-full bg-[#10B981]"></span> 膝關節屈伸</span>
+          <span class="flex items-center gap-1 text-slate-300"><span class="w-2.5 h-2.5 rounded-full bg-[#F59E0B]"></span> 軀幹前傾角</span>
+        `;
+      } else {
+        btnFront.className = 'px-2.5 py-1 rounded-md bg-sky-500/20 text-sky-300 border border-sky-500/40 font-semibold';
+        btnSide.className = 'px-2.5 py-1 rounded-md bg-slate-800 text-slate-400 hover:text-slate-200';
+        document.getElementById('gait-metrics-FRONT').classList.remove('hidden');
+        document.getElementById('gait-metrics-SIDE').classList.add('hidden');
+        document.getElementById('badge-active-mode').innerText = '跑步步態 · 正面力線';
+        document.getElementById('badge-gait-view').innerText = '正面冠狀面';
+        document.getElementById('chart-legend').innerHTML = `
+          <span class="flex items-center gap-1 text-slate-300"><span class="w-2.5 h-2.5 rounded-full bg-[#10B981]"></span> 膝力線角</span>
+          <span class="flex items-center gap-1 text-slate-300"><span class="w-2.5 h-2.5 rounded-full bg-[#F59E0B]"></span> 骨盆傾斜角</span>
+        `;
+      }
+      document.getElementById('badge-active-mode').className = 'px-2.5 py-1 rounded-md bg-slate-900/85 border border-sky-500/40 text-xs font-bold text-sky-400 backdrop-blur';
+      document.getElementById('badge-phase').innerText = '外骨骼關節追蹤';
+    }
+
+    function setVideoFPS(fps) {
+      videoFPS = parseInt(fps);
+      if (takeoffFrame !== null && landingFrame !== null) recalculateJumpMetrics();
+    }
+
+    // --- 2. 影片上傳與自動執行 ---
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('border-emerald-500'); });
+    dropZone.addEventListener('dragleave', () => { dropZone.classList.remove('border-emerald-500'); });
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('border-emerald-500');
+      if (e.dataTransfer.files && e.dataTransfer.files[0]) loadVideoFile(e.dataTransfer.files[0]);
+    });
+
+    function handleVideoUpload(event) {
+      if (event.target.files[0]) loadVideoFile(event.target.files[0]);
+    }
+
+    function loadVideoFile(file) {
+      if (isWebcam && camera) { camera.stop(); isWebcam = false; }
+      stopSimulation();
+
+      const url = URL.createObjectURL(file);
+      video.src = url;
+      video.load();
+
+      video.onloadedmetadata = () => {
+        document.getElementById('idle-placeholder').classList.add('hidden');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        totalFrames = Math.floor(video.duration * videoFPS);
+        scrubber.max = video.duration;
+        scrubber.value = 0;
+        updateScrubberDisplay(0);
+        video.currentTime = 0;
+
+        setTimeout(() => {
+          runDeterministicAnalysis();
+        }, 150);
+      };
+    }
+
+    // --- 3. 確定性逐格分析 (跳躍地面狀態機 + 跑步步態分析) ---
+    async function runDeterministicAnalysis() {
+      if (!video.src || video.duration === 0) return;
+
+      video.pause();
+      document.getElementById('analyzing-overlay').classList.remove('hidden');
+      document.getElementById('state-indicator').innerText = '狀態: 分析計算中...';
+
+      const dt = 1.0 / videoFPS;
+      const numFrames = Math.floor(video.duration * videoFPS);
+      const frameDataList = [];
+      angleTimeSeries = [];
+
+      for (let f = 0; f < numFrames; f++) {
+        const targetTime = f * dt;
+        video.currentTime = targetTime;
+        await waitForSeek(video);
+
+        const lm = await estimatePoseSingleFrame(video);
+        if (lm) {
+          // 雙腳最低點 (取腳尖 31,32 與腳跟 29,30 的最大 Y 值，代表最靠近地面)
+          const leftFootMaxY = Math.max(lm[31].y, lm[29].y);
+          const rightFootMaxY = Math.max(lm[32].y, lm[30].y);
+          // 雙腳同時離地指標：取較低那隻腳的高度（只要有一隻腳在地上，值就接近地面）
+          const lowestFootY = Math.max(leftFootMaxY, rightFootMaxY);
+
+          const kneeDeg = calculateAngle(lm[23], lm[25], lm[27]);
+          const hipDeg = calculateAngle(lm[11], lm[23], lm[25]);
+
+          // 跑步側面：軀幹前傾角 (肩中點到髖中點與垂直線夾角)
+          const midShoulder = { x: (lm[11].x + lm[12].x) / 2, y: (lm[11].y + lm[12].y) / 2 };
+          const midHip = { x: (lm[23].x + lm[24].x) / 2, y: (lm[23].y + lm[24].y) / 2 };
+          const trunkLean = Math.abs(Math.atan2(midShoulder.x - midHip.x, midHip.y - midShoulder.y) * (180 / Math.PI));
+
+          // 跑步正面：骨盆水平傾斜角 & 膝內扣力線
+          const pelvicDrop = Math.abs(Math.atan2(lm[24].y - lm[23].y, lm[24].x - lm[23].x) * (180 / Math.PI));
+          const normalizedPelvic = pelvicDrop > 90 ? 180 - pelvicDrop : pelvicDrop;
+
+          frameDataList.push({
+            frame: f,
+            time: targetTime,
+            lowestFootY,
+            leftFootMaxY,
+            rightFootMaxY,
+            kneeDeg,
+            hipDeg,
+            trunkLean,
+            pelvicDrop: normalizedPelvic,
+            toeY: lm[31].y,
+            heelY: lm[29].y
+          });
+
+          angleTimeSeries.push({
+            time: targetTime.toFixed(2),
+            val1: mainCategory === 'JUMP' ? Math.round(kneeDeg) : Math.round(kneeDeg),
+            val2: mainCategory === 'JUMP' ? Math.round(hipDeg) : (gaitViewMode === 'SIDE' ? Math.round(trunkLean) : Math.round(normalizedPelvic))
+          });
+        }
+
+        if (f % 5 === 0 || f === numFrames - 1) {
+          const pct = Math.round(((f + 1) / numFrames) * 100);
+          document.getElementById('analysis-progress-text').innerText = `影格進度: ${pct}%`;
+        }
+      }
+
+      if (mainCategory === 'JUMP') {
+        analyzeJumpGroundContact(frameDataList);
+      } else {
+        analyzeRunningGait(frameDataList);
+      }
+
+      refreshAngleChart();
+      document.getElementById('analyzing-overlay').classList.add('hidden');
+      document.getElementById('state-indicator').innerText = '狀態: 分析完成';
+    }
+
+    // --- 核心演算法 1：簡化精準 3 階段地面接觸狀態機 ---
+    function analyzeJumpGroundContact(data) {
+      if (data.length < 10) return;
+
+      // 1. 建立地面基準線 (取前 8 幀靜止站立時雙腳最低點的平均)
+      const initFrames = data.slice(0, Math.min(8, Math.floor(data.length * 0.2)));
+      floorBaselineY = initFrames.reduce((sum, d) => sum + d.lowestFootY, 0) / initFrames.length;
+
+      // 找出空中最高點 (lowestFootY 最小處)
+      let minFootY = Infinity;
+      let apexIdx = 0;
+      for (let i = 0; i < data.length; i++) {
+        if (data[i].lowestFootY < minFootY) {
+          minFootY = data[i].lowestFootY;
+          apexIdx = i;
+        }
+      }
+
+      // 離地判定容許值 (排除地面反光或微小抖動，約跳躍總高度的 8% 作為離地門檻)
+      const jumpSpan = floorBaselineY - minFootY;
+      const liftThreshold = floorBaselineY - Math.max(0.015, jumpSpan * 0.08);
+
+      // 2. 從最高點往回找「腳剛離開地面」的那一幀 (起飛時間)
+      let tOff = 0;
+      for (let i = apexIdx; i >= 0; i--) {
+        if (data[i].lowestFootY >= liftThreshold) {
+          tOff = data[i].frame;
+          break;
+        }
+      }
+
+      // 3. 從最高點往後找「腳再次接觸地面」的那一幀 (起跳結束)
+      let lAnd = data.length - 1;
+      for (let i = apexIdx; i < data.length; i++) {
+        if (data[i].lowestFootY >= liftThreshold) {
+          lAnd = data[i].frame;
+          break;
+        }
+      }
+
+      takeoffFrame = tOff;
+      landingFrame = lAnd;
+
+      updateFrameLabels();
+      recalculateJumpMetrics();
+      seekToFrame(takeoffFrame);
+    }
+
+    function recalculateJumpMetrics() {
+      if (takeoffFrame === null || landingFrame === null || landingFrame <= takeoffFrame) return;
+
+      const g = 9.80665;
+      const takeoffSec = takeoffFrame / videoFPS;
+      const landingSec = landingFrame / videoFPS;
+      // 從起跳開始到結束中間這段時間就是滯空時間
+      const flightTime = landingSec - takeoffSec;
+
+      // 滯空時間計算高度: H = 1/8 * g * t^2
+      const jumpHeightCm = (1 / 8) * g * Math.pow(flightTime, 2) * 100;
+      const takeoffVelocity = 0.5 * g * flightTime;
+
+      const mass = parseFloat(document.getElementById('input-weight').value) || 70;
+      const peakPower = Math.max(0, (60.7 * jumpHeightCm) + (45.3 * mass) - 2055);
+
+      // 更新三階段時間顯示
+      document.getElementById('stage-takeoff-t').innerText = `${takeoffSec.toFixed(3)}s`;
+      document.getElementById('stage-flight-t').innerText = `${flightTime.toFixed(3)}s`;
+      document.getElementById('stage-landing-t').innerText = `${landingSec.toFixed(3)}s`;
+
+      // 更新核心結果
+      document.getElementById('metric-height').innerText = jumpHeightCm.toFixed(1);
+      document.getElementById('metric-flight-ms').innerText = Math.round(flightTime * 1000);
+      document.getElementById('metric-flight-sec').innerText = `${flightTime.toFixed(3)} 秒`;
+      document.getElementById('metric-velocity').innerText = takeoffVelocity.toFixed(2);
+      document.getElementById('metric-power').innerText = Math.round(peakPower);
+      document.getElementById('metric-rel-power').innerText = `${(peakPower / mass).toFixed(1)} W/kg`;
+
+      if (jumpSubMode === 'CMJ') cmjHeightRecord = jumpHeightCm;
+      if (jumpSubMode === 'SJ') sjHeightRecord = jumpHeightCm;
+      updateSpecializedMetricsPanel(jumpHeightCm);
+    }
+
+    // --- 核心演算法 2：跑步外骨骼步態正側面生物力學分析 ---
+    function analyzeRunningGait(data) {
+      if (data.length < 5) return;
+
+      if (gaitViewMode === 'SIDE') {
+        // 側面矢狀面指標
+        const avgTrunkLean = data.reduce((s, d) => s + d.trunkLean, 0) / data.length;
+        const minKneeFlex = Math.min(...data.map(d => d.kneeDeg)); // 支撐期最大屈曲(角度最小)
+        const maxHipExt = Math.max(...data.map(d => d.hipDeg));   // 最大伸展
+
+        document.getElementById('gait-trunk-lean').innerText = avgTrunkLean.toFixed(1);
+        document.getElementById('gait-knee-flex').innerText = Math.round(minKneeFlex);
+        document.getElementById('gait-hip-ext').innerText = Math.round(maxHipExt);
+
+        // 著地瞬間足尖與腳跟相對高度判定著地型態
+        const midFrame = data[Math.floor(data.length / 2)];
+        const strikeType = midFrame.toeY > midFrame.heelY ? '中前足著地 (Fore/Midfoot)' : '足跟先著地 (Heel Strike)';
+        document.getElementById('gait-foot-strike').innerText = strikeType;
+      } else {
+        // 正面冠狀面指標
+        const maxPelvicDrop = Math.max(...data.map(d => d.pelvicDrop));
+        const minValgus = Math.min(...data.map(d => d.kneeDeg));
+
+        document.getElementById('gait-pelvic-drop').innerText = maxPelvicDrop.toFixed(1);
+        document.getElementById('gait-knee-valgus').innerText = Math.round(minValgus);
+
+        const feedback = (maxPelvicDrop < 6 && minValgus > 168)
+          ? '下肢力線穩定，骨盆無明顯單側下墜 (Trendelenburg 陰性)。'
+          : '偵測到支撐期骨盆傾斜或輕微膝內扣 (Knee Valgus)，建議強化臀中肌穩定度。';
+        document.getElementById('gait-frontal-feedback').innerText = feedback;
+      }
+      seekToFrame(Math.floor(data.length / 2));
+    }
+
+    // --- 外部骨骼與地面基準線繪製 ---
+    function onPoseResults(results) {
+      ctx.save();
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      if (results.image) {
+        ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+      }
+
+      // 若在垂直跳躍模式且已建立地面基準線，繪製清晰的地面接觸基準線
+      if (mainCategory === 'JUMP' && floorBaselineY !== null) {
+        const lineY = floorBaselineY * canvas.height;
+        ctx.beginPath();
+        ctx.moveTo(0, lineY);
+        ctx.lineTo(canvas.width, lineY);
+        ctx.strokeStyle = 'rgba(16, 185, 129, 0.75)';
+        ctx.lineWidth = 2.5;
+        ctx.setLineDash([8, 6]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.font = '700 13px Chakra Petch, monospace';
+        ctx.fillStyle = '#10B981';
+        ctx.fillText('FLOOR CONTACT LINE (離地/觸地基準線)', 14, lineY - 8);
+      }
+
+      if (results.poseLandmarks) {
+        const lm = results.poseLandmarks;
+
+        const nose = lm[0];
+        const lShoulder = lm[11], rShoulder = lm[12];
+        const lHip = lm[23], rHip = lm[24];
+        const lKnee = lm[25], rKnee = lm[26];
+        const lAnkle = lm[27], rAnkle = lm[28];
+        const lToe = lm[31], rToe = lm[32];
+
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        // 1. 頭-肩連線 (天藍色 5px)
+        if (nose && lShoulder && rShoulder) {
+          const midSX = ((lShoulder.x + rShoulder.x) / 2) * canvas.width;
+          const midSY = ((lShoulder.y + rShoulder.y) / 2) * canvas.height;
+          ctx.beginPath();
+          ctx.moveTo(nose.x * canvas.width, nose.y * canvas.height);
+          ctx.lineTo(midSX, midSY);
+          ctx.strokeStyle = '#38BDF8';
+          ctx.lineWidth = 5.0;
+          ctx.stroke();
+        }
+
+        // 2. 軀幹-骨盆 (琥珀橙 5px)
+        ctx.strokeStyle = '#F59E0B';
+        ctx.lineWidth = 5.0;
+        [
+          { a: lShoulder, b: rShoulder }, { a: lShoulder, b: lHip },
+          { a: rShoulder, b: rHip }, { a: lHip, b: rHip }
+        ].forEach(p => {
+          if (p.a && p.b && p.a.visibility > 0.4 && p.b.visibility > 0.4) {
+            ctx.beginPath();
+            ctx.moveTo(p.a.x * canvas.width, p.a.y * canvas.height);
+            ctx.lineTo(p.b.x * canvas.width, p.b.y * canvas.height);
+            ctx.stroke();
+          }
+        });
+
+        // 3. 髖-膝-踝-腳尖 (翠綠色 5px)
+        ctx.strokeStyle = '#10B981';
+        ctx.lineWidth = 5.0;
+        [
+          { a: lHip, b: lKnee }, { a: lKnee, b: lAnkle }, { a: lAnkle, b: lToe },
+          { a: rHip, b: rKnee }, { a: rKnee, b: rAnkle }, { a: rAnkle, b: rToe }
+        ].forEach(p => {
+          if (p.a && p.b && p.a.visibility > 0.4 && p.b.visibility > 0.4) {
+            ctx.beginPath();
+            ctx.moveTo(p.a.x * canvas.width, p.a.y * canvas.height);
+            ctx.lineTo(p.b.x * canvas.width, p.b.y * canvas.height);
+            ctx.stroke();
+          }
+        });
+
+        // 4. 關節點圓圈 (半徑 9px)
+        [nose, lShoulder, rShoulder, lHip, rHip, lKnee, rKnee, lAnkle, rAnkle, lToe, rToe].forEach(pt => {
+          if (pt && pt.visibility > 0.4) {
+            ctx.beginPath();
+            ctx.arc(pt.x * canvas.width, pt.y * canvas.height, 9.0, 0, 2 * Math.PI);
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fill();
+            ctx.lineWidth = 2.5;
+            ctx.strokeStyle = '#0F172A';
+            ctx.stroke();
+          }
+        });
+
+        // 5. 即時角度標註
+        if (lHip && lKnee && lAnkle) {
+          const kneeDeg = calculateAngle(lHip, lKnee, lAnkle);
+          const hipDeg = calculateAngle(lShoulder, lHip, lKnee);
+          const ankleDeg = calculateAngle(lKnee, lAnkle, lToe);
+
+          document.getElementById('live-knee-angle').innerText = `${Math.round(kneeDeg)}°`;
+          document.getElementById('live-hip-angle').innerText = `${Math.round(hipDeg)}°`;
+          document.getElementById('live-ankle-angle').innerText = `${Math.round(ankleDeg)}°`;
+
+          drawLargeBadge(ctx, `Knee: ${Math.round(kneeDeg)}°`, lKnee.x * canvas.width + 14, lKnee.y * canvas.height, '#10B981');
+          drawLargeBadge(ctx, `Hip: ${Math.round(hipDeg)}°`, lHip.x * canvas.width + 14, lHip.y * canvas.height, '#F59E0B');
+
+          // 若為垂直跳躍模式，顯示當前「觸地 / 騰空滯空」即時狀態
+          if (mainCategory === 'JUMP' && floorBaselineY !== null) {
+            const footY = Math.max(lToe.y, rToe.y);
+            const isAirborne = footY < (floorBaselineY - 0.015);
+            const statusText = isAirborne ? 'AIRBORNE (空中滯空)' : 'ON GROUND (接觸地面)';
+            const statusColor = isAirborne ? '#38BDF8' : '#10B981';
+            document.getElementById('badge-phase').innerText = statusText;
+            document.getElementById('badge-phase').style.color = statusColor;
+          }
+        }
+      }
+      ctx.restore();
+    }
+
+    function drawLargeBadge(c, text, x, y, color) {
+      c.font = '700 16px Chakra Petch, monospace';
+      const width = c.measureText(text).width;
+      const safeX = Math.min(x, canvas.width - width - 20);
+      c.fillStyle = 'rgba(9, 13, 22, 0.88)';
+      c.strokeStyle = color;
+      c.lineWidth = 1.5;
+      c.beginPath();
+      c.roundRect(safeX - 4, y - 15, width + 12, 22, 5);
+      c.fill();
+      c.stroke();
+      c.fillStyle = color;
+      c.fillText(text, safeX + 2, y + 2);
+    }
+
+    function calculateAngle(a, b, c) {
+      if (!a || !b || !c) return 180;
+      const rad = Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(a.y - b.y, a.x - b.x);
+      let deg = Math.abs((rad * 180.0) / Math.PI);
+      if (deg > 180.0) deg = 360 - deg;
+      return deg;
+    }
+
+    // --- 模擬器 (支援垂直跳躍 + 跑步正側面步態) ---
+    function startSimulation() {
+      if (isWebcam && camera) { camera.stop(); isWebcam = false; }
+      video.pause();
+      stopSimulation();
+      document.getElementById('idle-placeholder').classList.add('hidden');
+      canvas.width = 640;
+      canvas.height = 480;
+      isSimulating = true;
+
+      if (mainCategory === 'JUMP') {
+        runJumpSimulation();
+      } else {
+        runGaitSimulation();
+      }
+    }
+
+    function stopSimulation() {
+      isSimulating = false;
+      if (simAnimId) cancelAnimationFrame(simAnimId);
+    }
+
+    function runJumpSimulation() {
+      let frame = 0;
+      const total = 90;
+      const g = 9.80665;
+      const flightSec = 0.54; // 0.54s 滯空 (~35.7cm)
+      const simHeight = (1 / 8) * g * Math.pow(flightSec, 2) * 100;
+
+      takeoffFrame = 25;
+      landingFrame = Math.round(25 + flightSec * 60);
+      floorBaselineY = 390 / 480;
+      updateFrameLabels();
+      recalculateJumpMetrics();
+
+      angleTimeSeries = [];
+      for (let i = 0; i <= total; i++) {
+        let squat = (i < 25) ? Math.sin((i / 25) * Math.PI) * 85 : 0;
+        angleTimeSeries.push({ time: (i / 60).toFixed(2), val1: Math.round(176 - squat), val2: Math.round(172 - squat * 0.9) });
+      }
+      refreshAngleChart();
+
+      function loop() {
+        if (!isSimulating) return;
+        ctx.fillStyle = '#090D16';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // 地面接觸基準線
+        ctx.strokeStyle = '#10B981';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([8, 6]);
+        ctx.beginPath();
+        ctx.moveTo(40, 390);
+        ctx.lineTo(600, 390);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        let yOff = 0;
+        let isAir = false;
+        if (frame >= takeoffFrame && frame <= landingFrame) {
+          isAir = true;
+          const p = (frame - takeoffFrame) / (landingFrame - takeoffFrame);
+          yOff = -Math.sin(p * Math.PI) * (simHeight * 3.8);
+        }
+
+        const phaseLabel = isAir ? 'AIRBORNE (空中滯空計時中)' : 'ON GROUND (接觸地面)';
+        document.getElementById('badge-phase').innerText = phaseLabel;
+
+        let squat = (frame < 25) ? Math.sin((frame / 25) * Math.PI) * 32 : 0;
+        const head = { x: 320, y: 170 + yOff + squat };
+        const shoulder = { x: 320, y: 200 + yOff + squat };
+        const hip = { x: 320, y: 265 + yOff + squat };
+        const knee = { x: 300 - squat * 0.3, y: 325 + yOff + squat * 0.5 };
+        const ankle = { x: 295, y: 385 + yOff };
+        const toe = { x: 318, y: 390 + yOff };
+
+        drawStickFigure(head, shoulder, hip, knee, ankle, toe, Math.round(176 - squat * 2.5));
+
+        frame = (frame + 1) % total;
+        simAnimId = requestAnimationFrame(loop);
+      }
+      loop();
+    }
+
+    function runGaitSimulation() {
+      let frame = 0;
+      const total = 60;
+
+      if (gaitViewMode === 'SIDE') {
+        document.getElementById('gait-trunk-lean').innerText = '7.8';
+        document.getElementById('gait-knee-flex').innerText = '139';
+        document.getElementById('gait-hip-ext').innerText = '194';
+        document.getElementById('gait-foot-strike').innerText = '中前足著地 (Fore/Midfoot)';
+      } else {
+        document.getElementById('gait-pelvic-drop').innerText = '3.2';
+        document.getElementById('gait-knee-valgus').innerText = '175';
+        document.getElementById('gait-frontal-feedback').innerText = '下肢力線穩定，骨盆無明顯單側下墜 (Trendelenburg 陰性)。';
+      }
+
+      angleTimeSeries = [];
+      for (let i = 0; i <= total; i++) {
+        const s = Math.sin((i / total) * Math.PI * 2);
+        angleTimeSeries.push({
+          time: (i / 60).toFixed(2),
+          val1: Math.round(150 + s * 22),
+          val2: gaitViewMode === 'SIDE' ? Math.round(8 + s * 1.5) : Math.round(3 + Math.abs(s) * 1.5)
+        });
+      }
+      refreshAngleChart();
+
+      function loop() {
+        if (!isSimulating) return;
+        ctx.fillStyle = '#090D16';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        const t = (frame / total) * Math.PI * 2;
+        if (gaitViewMode === 'SIDE') {
+          // 側面跑姿動態演示
+          const swing = Math.sin(t) * 35;
+          const head = { x: 332, y: 165 };
+          const shoulder = { x: 328, y: 195 };
+          const hip = { x: 318, y: 265 };
+          const knee = { x: 318 + swing, y: 325 - Math.abs(swing) * 0.2 };
+          const ankle = { x: 318 + swing * 0.7 - 15, y: 385 - Math.max(0, swing) * 0.5 };
+          const toe = { x: ankle.x + 22, y: ankle.y + 4 };
+          drawStickFigure(head, shoulder, hip, knee, ankle, toe, Math.round(145 + Math.cos(t) * 18));
+        } else {
+          // 正面跑姿力線演示
+          const bounce = Math.abs(Math.sin(t)) * 10;
+          const head = { x: 320, y: 160 - bounce };
+          const shoulder = { x: 320, y: 195 - bounce };
+          const hip = { x: 320, y: 265 - bounce };
+          const knee = { x: 305, y: 330 - bounce * 0.5 };
+          const ankle = { x: 305, y: 390 };
+          const toe = { x: 305, y: 396 };
+          drawStickFigure(head, shoulder, hip, knee, ankle, toe, 175);
+        }
+
+        frame = (frame + 1) % total;
+        simAnimId = requestAnimationFrame(loop);
+      }
+      loop();
+    }
+
+    function drawStickFigure(head, shoulder, hip, knee, ankle, toe, kneeDeg) {
+      ctx.lineCap = 'round';
+      ctx.lineWidth = 5.0;
+
+      ctx.strokeStyle = '#38BDF8';
+      ctx.beginPath(); ctx.moveTo(head.x, head.y); ctx.lineTo(shoulder.x, shoulder.y); ctx.stroke();
+
+      ctx.strokeStyle = '#F59E0B';
+      ctx.beginPath(); ctx.moveTo(shoulder.x, shoulder.y); ctx.lineTo(hip.x, hip.y); ctx.stroke();
+
+      ctx.strokeStyle = '#10B981';
+      ctx.beginPath();
+      ctx.moveTo(hip.x, hip.y); ctx.lineTo(knee.x, knee.y); ctx.lineTo(ankle.x, ankle.y); ctx.lineTo(toe.x, toe.y);
+      ctx.stroke();
+
+      [head, shoulder, hip, knee, ankle, toe].forEach(p => {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 9.0, 0, 2 * Math.PI);
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fill();
+        ctx.lineWidth = 2.5;
+        ctx.strokeStyle = '#0F172A';
+        ctx.stroke();
+      });
+
+      drawLargeBadge(ctx, `Knee: ${kneeDeg}°`, knee.x + 14, knee.y, '#10B981');
+      document.getElementById('live-knee-angle').innerText = `${kneeDeg}°`;
+      document.getElementById('live-hip-angle').innerText = `172°`;
+      document.getElementById('live-ankle-angle').innerText = `92°`;
+    }
+
+    // --- 輔助與互動控制函式 ---
+    function waitForSeek(v) {
+      return new Promise(res => {
+        const h = () => { v.removeEventListener('seeked', h); res(); };
+        v.addEventListener('seeked', h);
+      });
+    }
+
+    function estimatePoseSingleFrame(v) {
+      return new Promise(res => {
+        const once = (r) => { pose.onResults(onPoseResults); res(r.poseLandmarks || null); };
+        pose.onResults(once);
+        pose.send({ image: v });
+      });
+    }
+
+    scrubber.addEventListener('pointerdown', () => {
+      isScrubbing = true;
+      scrubWasPlaying = !video.paused;
+      video.pause();
+    });
+    scrubber.addEventListener('input', (e) => {
+      const t = parseFloat(e.target.value);
+      updateScrubberDisplay(t);
+      requestDirectSeek(t);
+    });
+    scrubber.addEventListener('pointerup', () => {
+      isScrubbing = false;
+      if (scrubWasPlaying) { video.play(); requestAnimationFrame(renderLoop); }
+    });
+
+    function requestDirectSeek(time) {
+      pendingSeekTime = time;
+      if (!isSeeking) applySeek();
+    }
+
+    function applySeek() {
+      if (pendingSeekTime === null) return;
+      isSeeking = true;
+      const target = pendingSeekTime;
+      pendingSeekTime = null;
+      if ('fastSeek' in video) video.fastSeek(target); else video.currentTime = target;
+      video.addEventListener('seeked', () => {
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        pose.send({ image: video });
+        isSeeking = false;
+        if (pendingSeekTime !== null) applySeek();
+      }, { once: true });
+    }
+
+    function updateScrubberDisplay(t) {
+      const currF = Math.min(totalFrames, Math.floor(t * videoFPS));
+      document.getElementById('current-frame-info').innerText = `Frame: ${currF} / ${totalFrames} (${t.toFixed(3)}s)`;
+    }
+
+    function togglePlayPause() {
+      if (!video.src) return;
+      if (video.paused) { video.play(); requestAnimationFrame(renderLoop); } else { video.pause(); }
+    }
+
+    function renderLoop() {
+      if (!video.paused && !video.ended) {
+        if (!isScrubbing) {
+          scrubber.value = video.currentTime;
+          updateScrubberDisplay(video.currentTime);
+        }
+        pose.send({ image: video });
+        requestAnimationFrame(renderLoop);
+      }
+    }
+
+    function adjustTakeoffFrame(delta) {
+      if (takeoffFrame === null) return;
+      takeoffFrame = Math.max(0, Math.min(landingFrame - 1, takeoffFrame + delta));
+      updateFrameLabels();
+      recalculateJumpMetrics();
+      seekToFrame(takeoffFrame);
+    }
+
+    function adjustLandingFrame(delta) {
+      if (landingFrame === null) return;
+      landingFrame = Math.max(takeoffFrame + 1, Math.min(totalFrames, landingFrame + delta));
+      updateFrameLabels();
+      recalculateJumpMetrics();
+      seekToFrame(landingFrame);
+    }
+
+    function updateFrameLabels() {
+      if (takeoffFrame !== null) {
+        document.getElementById('lbl-takeoff-info').innerText = `F: ${takeoffFrame} (${(takeoffFrame / videoFPS).toFixed(3)}s)`;
+      }
+      if (landingFrame !== null) {
+        document.getElementById('lbl-landing-info').innerText = `F: ${landingFrame} (${(landingFrame / videoFPS).toFixed(3)}s)`;
+      }
+    }
+
+    function seekToFrame(f) {
+      if (f === null || !video.src) return;
+      video.pause();
+      const t = f / videoFPS;
+      scrubber.value = t;
+      updateScrubberDisplay(t);
+      requestDirectSeek(t);
+    }
+
+    function refreshAngleChart() {
+      if (angleTimeSeries.length === 0) return;
+      angleChart.data.labels = angleTimeSeries.map(d => d.time);
+      angleChart.data.datasets[0].data = angleTimeSeries.map(d => d.val1);
+      angleChart.data.datasets[1].data = angleTimeSeries.map(d => d.val2);
+      angleChart.update();
+    }
+
+    function updateSpecializedMetricsPanel(jumpHeightCm = 0) {
+      const panel = document.getElementById('specialized-metrics');
+      if (jumpSubMode === 'CMJ') {
+        panel.innerHTML = `
+          <div class="flex justify-between items-center text-slate-300">
+            <span>反向跳 (CMJ) 彈性利用率</span>
+            <span class="text-emerald-400 font-num">${sjHeightRecord ? (jumpHeightCm / sjHeightRecord).toFixed(2) : '待完成 SJ'}</span>
+          </div>
+        `;
+      } else if (jumpSubMode === 'SJ') {
+        panel.innerHTML = `
+          <div class="flex justify-between items-center text-slate-300">
+            <span>靜態蹲跳 (SJ) 偏心利用率</span>
+            <span class="text-sky-400 font-num">${(cmjHeightRecord && jumpHeightCm > 0) ? (cmjHeightRecord / jumpHeightCm).toFixed(2) : '待完成 CMJ'}</span>
+          </div>
+        `;
+      } else {
+        const contactMs = 210;
+        const rsi = (jumpHeightCm / 100) / (contactMs / 1000);
+        panel.innerHTML = `
+          <div class="flex justify-between items-center text-slate-300">
+            <span>深跳反應肌力指數 (RSI)</span>
+            <span class="text-amber-400 font-num font-bold">${rsi.toFixed(2)}</span>
+          </div>
+        `;
+      }
+    }
+
+    function toggleWebcam() {
+      if (isWebcam) {
+        camera.stop();
+        isWebcam = false;
+        document.getElementById('btn-webcam').classList.remove('bg-emerald-600', 'text-white');
+      } else {
+        stopSimulation();
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } }).then((stream) => {
+          video.srcObject = stream;
+          video.play();
+          document.getElementById('idle-placeholder').classList.add('hidden');
+          camera = new Camera(video, {
+            onFrame: async () => { await pose.send({ image: video }); },
+            width: 640,
+            height: 480
+          });
+          camera.start();
+          isWebcam = true;
+          document.getElementById('btn-webcam').classList.add('bg-emerald-600', 'text-white');
+        });
+      }
+    }
+
+    function recalculateMetrics() {
+      if (mainCategory === 'JUMP') recalculateJumpMetrics();
+    }
+
+    function exportCSV() {
+      const height = document.getElementById('metric-height').innerText;
+      const flightMs = document.getElementById('metric-flight-ms').innerText;
+      const csv = "data:text/csv;charset=utf-8,"
+        + "類別,子模式,跳躍高度(cm),滯空時間(ms),起飛影格,結束影格\n"
+        + `${mainCategory},${mainCategory === 'JUMP' ? jumpSubMode : gaitViewMode},${height},${flightMs},${takeoffFrame || ''},${landingFrame || ''}`;
+      const link = document.createElement("a");
+      link.setAttribute("href", encodeURI(csv));
+      link.setAttribute("download", `JumpLab_v36_${Date.now()}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    function copyResults() {
+      const text = mainCategory === 'JUMP'
+        ? `【JumpLab v3.6 垂直跳躍報告】\n項目: ${jumpSubMode}\n跳躍高度: ${document.getElementById('metric-height').innerText} cm\n滯空時間: ${document.getElementById('metric-flight-ms').innerText} ms`
+        : `【JumpLab v3.6 跑步步態報告】\n視角: ${gaitViewMode}\n軀幹前傾: ${document.getElementById('gait-trunk-lean').innerText}°\n最大膝屈曲: ${document.getElementById('gait-knee-flex').innerText}°`;
+      navigator.clipboard.writeText(text).then(() => alert('檢測報告已複製！'));
+    }
+  </script>
+</body>
+</html>
